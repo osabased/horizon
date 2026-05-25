@@ -6,6 +6,8 @@ It is not another agentic IDE, editor, chat interface, terminal UI, or replaceme
 
 Current status: paper / theory repo. No implementation yet.
 
+Horizon’s best-case goal is model leverage: a smaller, cheaper, faster model with Horizon should be able to compete with much larger frontier models operating without horizon
+
 ## Product thesis
 
 As codebases grow, coding agents waste more tokens, reread the same files, lose context, hallucinate APIs or project structure, and run expensive validation too broadly. Horizon exists to reduce that waste by maintaining durable local repo intelligence and feeding existing agents the smallest sufficient context for the current task.
