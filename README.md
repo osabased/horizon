@@ -59,6 +59,8 @@ Adapter components:
 - task result adapter
 - memory proposal adapter
 - degradation strategy per host
+- adapter contract tests
+- host capability degradation matrix
 
 ## Delegated execution model
 
@@ -100,17 +102,174 @@ Components:
 - task router
 - context-pack compiler
 - context budgets
+- context-pack ABI
 - memory write policy
+- fact lifecycle
 - provenance model
+- evidence priority model
 - stale / conflict policy
 - validation gate composer
 - workflow state
+- system state machines
 - audit trail
 - adapter contracts
+- adapter contract tests
 - confidence / risk model
+- outcome attribution model
 - cost accounting engine
 - repo contract engine
 - policy DSL engine
+- local data model / migrations
+- trust boundary contract
+
+## System contracts and lifecycles
+
+Horizon should be explicit about the contracts that connect its subsystems. The capability list describes what Horizon can do; this layer describes how those capabilities stay stable, testable, and safe as background intelligence changes over time.
+
+### State machines
+
+Background behavior should move through named states instead of relying on implicit flags or ad hoc heuristics.
+
+State machines:
+
+- session state machine
+- task state machine
+- context-pack state machine
+- memory-fact state machine
+- validation-run state machine
+- index-freshness state machine
+- intervention state machine
+
+### Context Pack ABI
+
+The context pack is Horizon's central handoff artifact to host agents. It should have a stable application binary/interface-style contract even if its internal retrieval machinery changes.
+
+Contract fields:
+
+- pack schema
+- snippet schema
+- provenance schema
+- freshness metadata
+- token budget metadata
+- inclusion rationale
+- exclusion rationale
+- host rendering contract
+- cache fingerprint
+- pack diff format
+
+### Evidence priority model
+
+When repo facts conflict, Horizon should use a deterministic source-of-truth order instead of trusting whichever source was retrieved first.
+
+Default priority:
+
+- live worktree
+- staged changes
+- current branch
+- lockfile / installed dependency state
+- repo config
+- tests
+- source code
+- local repo docs
+- external versioned docs
+- approved memory
+- model prior knowledge
+
+### Fact lifecycle
+
+Memory should not become permanent just because an agent said something once. Facts should be promoted, challenged, and retired through an explicit lifecycle.
+
+Lifecycle states:
+
+- observed
+- proposed
+- verified
+- approved
+- contradicted
+- stale
+- rejected
+- retired
+
+### Intervention ladder
+
+Horizon should stay invisible by default and only interrupt when risk, staleness, or cost justifies it.
+
+Intervention levels:
+
+- silent context injection
+- silent validation routing
+- passive status note
+- soft warning
+- stale-context warning
+- permission challenge
+- destructive-action block
+- fail-open passthrough
+
+### Adapter contract tests
+
+Each host adapter should prove what it can and cannot support. Horizon should degrade from measured adapter capability, not from optimistic assumptions.
+
+Tests:
+
+- can observe session
+- can inject context
+- can read tool calls
+- can observe file touches
+- can broker permissions
+- can attach validation results
+- can detect patch intent
+- can report task outcome
+- fallback behavior verified
+
+### Local data model and migrations
+
+Horizon is local-first, so its local state must be durable, recoverable, and evolvable.
+
+Components:
+
+- SQLite schema
+- migration system
+- index versioning
+- cache schema versioning
+- memory schema versioning
+- provenance schema versioning
+- backward compatibility policy
+- corruption recovery policy
+
+### Trust boundary contract
+
+Horizon will touch repo contents, session traces, validation output, and possibly secrets. Data exposure should be explicit per host and per adapter.
+
+Contract fields:
+
+- what never leaves the machine
+- what can be sent to host agents
+- what can be sent to docs providers
+- what can be sent to eval providers
+- secret scanning before context injection
+- transcript retention policy
+- artifact retention policy
+- per-host exposure policy
+
+### Outcome attribution
+
+Self-optimization should distinguish between Horizon helping, hurting, or being irrelevant. Otherwise telemetry becomes noise.
+
+Attribution labels:
+
+- Horizon helped
+- Horizon hurt
+- Horizon was neutral
+- context missing
+- context over-included
+- context unused
+- context stale
+- validation saved time
+- validation wasted time
+- memory prevented repeat failure
+- memory caused confusion
+- intervention useful
+- intervention annoying
 
 ## Background runtime
 
