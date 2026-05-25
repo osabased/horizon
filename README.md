@@ -4,7 +4,7 @@ Horizon is a local-first background optimization layer for agentic development.
 
 It is not another agentic IDE, editor, chat interface, terminal UI, or replacement for tools like opencode, Codex, Claude Code, or Aider. The user should keep using their existing coding agent normally. Horizon runs underneath those tools to make agentic coding scale better on complex projects.
 
-Current status: paper / theory repo. No implementation yet.
+Current status: paper / theory repo. No implementation yet. Everything is subject to change.
 
 Horizon’s best-case goal is model leverage: a smaller, cheaper, faster model with Horizon should be able to compete with much larger frontier models operating without horizon
 
