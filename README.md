@@ -942,6 +942,105 @@ Components:
 - hallucination incident tracking
 - regression benchmarks
 
+## Grounded research additions
+
+These are the repo-research additions worth keeping because they strengthen the Context Pack ABI and attribution loop instead of expanding Horizon sideways.
+
+### Benchmark and attribution harness
+
+Horizon should use benchmark tasks as replayable eval fixtures, not as leaderboard truth.
+
+Components:
+
+- SWE-bench-style task adapter
+- mini-agent baseline runner
+- Horizon-on / Horizon-off ablation runs
+- benchmark leakage / weak-test warning labels
+- patch outcome verifier
+- token / latency / repeated-scan comparison
+- context precision / recall comparison
+- attribution-label scoring
+- regression case capture from failed or misleading runs
+
+Goal:
+
+- prove whether Horizon reduces waste and hallucination in controlled runs
+- avoid optimizing for benchmark scores that do not reflect real developer value
+
+### Repo-native AI checks
+
+Horizon should support source-controlled checks that express repo-specific guardrails without becoming a CI platform.
+
+Possible layout:
+
+- `.horizon/checks/`
+- `.horizon/policies/`
+
+Check types:
+
+- architecture boundary check
+- risky-edit check
+- generated-file check
+- migration safety check
+- dependency/API drift check
+- validation-routing hint
+- context-pack requirement check
+- forbidden-pattern check
+
+Checks should be compiled into Horizon policy and validation decisions, not treated as generic prompts.
+
+### Command discovery for validation routing
+
+Horizon should discover how a repo already builds, tests, lints, formats, and typechecks before inventing validation routes.
+
+Sources:
+
+- `package.json` scripts
+- `justfile`
+- `mise.toml`
+- `Makefile`
+- `Taskfile.yml`
+- `tox.ini`
+- `noxfile.py`
+- language-native test configs
+- CI workflow files
+
+Tracked command metadata:
+
+- command purpose
+- expected cost
+- historical runtime
+- failure signature
+- flakiness score
+- source/test affinity
+- destructive-risk classification
+- whether the command is safe for silent background execution
+
+### Docs and artifact ingestion
+
+Horizon should ingest external and local non-code artifacts only when they can produce versioned, provenance-tagged facts for the Context Pack ABI.
+
+Inputs:
+
+- framework docs
+- changelogs
+- migration guides
+- API docs
+- local design docs
+- PDFs
+- screenshots / diagrams
+- architecture notes
+- generated reference material
+
+Outputs:
+
+- version-aware API facts
+- migration facts
+- artifact-derived facts
+- stale-doc warnings
+- provenance anchors back to source artifact, URL, version, page, or section
+- context-pack items with freshness and confidence metadata
+
 ## Config and policy DSL
 
 Users and repos should be able to configure Horizon without changing Horizon internals.
