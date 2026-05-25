@@ -53,10 +53,6 @@ Horizon should support multiple agentic coding tools through thin adapters.
 Initial host targets:
 
 - opencode
-- Codex
-- Claude Code
-- Aider
-- other CLI / MCP-compatible coding agents
 
 Adapter components:
 
