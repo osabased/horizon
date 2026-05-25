@@ -20,6 +20,14 @@ Horizon's role is to reduce:
 - agent confusion on large projects
 - latency caused by rebuilding project understanding from scratch
 
+## Core loop
+
+Horizon may grow into many local-first agentic development subsystems, but its central loop is:
+
+Observe repo + task + session -> compile Context Pack -> deliver through Context Pack ABI -> observe agent behavior -> attribute outcome -> improve the next pack.
+
+Context Pack ABI is the handoff contract. Attribution loop is the learning mechanism. Everything else in Horizon exists to make that loop more accurate, cheaper, fresher, safer, or more useful across host agents.
+
 ## Product spine
 
 Horizon integrates underneath existing agentic coding tools without replacing their UI or workflow.
@@ -54,6 +62,9 @@ Adapter components:
 - host capability matrix
 - session observer adapter
 - context injection adapter
+- context-pack rendering adapter
+- context-pack usage adapter
+- attribution signal adapter
 - permission adapter
 - validation adapter
 - task result adapter
@@ -103,6 +114,12 @@ Components:
 - context-pack compiler
 - context budgets
 - context-pack ABI
+- context-pack ABI registry
+- context-pack manifest
+- context-pack diff engine
+- context-pack cache fingerprinting
+- context-pack attribution hooks
+- context utility ledger
 - memory write policy
 - fact lifecycle
 - provenance model
@@ -115,6 +132,7 @@ Components:
 - adapter contracts
 - adapter contract tests
 - confidence / risk model
+- attribution loop
 - outcome attribution model
 - cost accounting engine
 - repo contract engine
@@ -135,6 +153,7 @@ State machines:
 - session state machine
 - task state machine
 - context-pack state machine
+- attribution state machine
 - memory-fact state machine
 - validation-run state machine
 - index-freshness state machine
@@ -142,20 +161,78 @@ State machines:
 
 ### Context Pack ABI
 
-The context pack is Horizon's central handoff artifact to host agents. It should have a stable application binary/interface-style contract even if its internal retrieval machinery changes.
+The Context Pack ABI is Horizon's stable handoff contract between repo intelligence and host coding agents. It should make context packs portable across hosts, comparable across runs, cacheable across similar tasks, inspectable by the user, and attributable after the task finishes.
+
+It is not a prompt template. It is the durable interface that lets Horizon change its internal retrieval, memory, indexing, and validation machinery without breaking host adapters.
 
 Contract fields:
 
+- ABI version
 - pack schema
+- pack manifest
+- task identity
+- host identity
+- repo identity
+- branch / commit / worktree fingerprint
+- dependency / lockfile fingerprint
 - snippet schema
+- context item kind
 - provenance schema
+- source path / symbol / range anchors
+- content hash
 - freshness metadata
 - token budget metadata
 - inclusion rationale
 - exclusion rationale
+- retrieval query / ranking signal
+- confidence score
+- risk score
 - host rendering contract
+- compaction-safe representation
+- expected-use hints
+- citation / reference handles
+- attribution hook IDs
+- redaction / exposure flags
 - cache fingerprint
 - pack diff format
+- compatibility / migration policy
+
+Context item kinds:
+
+- source snippet
+- symbol summary
+- file summary
+- architectural contract
+- repo convention
+- test hint
+- validation hint
+- dependency / API fact
+- external documentation fact
+- approved memory
+- stale memory warning
+- negative knowledge
+- generated-file warning
+- risk note
+- task acceptance criterion
+
+ABI goals:
+
+- host agents can consume context without knowing Horizon internals
+- Horizon can change retrieval internals without breaking host adapters
+- every item in the pack can be traced back to evidence
+- every item has a cost and a reason for inclusion
+- every omission can be explained when useful
+- every pack can be compared against later packs
+- every pack can participate in outcome attribution
+
+Possible diagnostics:
+
+- `horizon pack build`
+- `horizon pack inspect`
+- `horizon pack diff`
+- `horizon pack replay`
+- `horizon pack explain`
+- `horizon pack blame`
 
 ### Evidence priority model
 
@@ -219,6 +296,8 @@ Tests:
 - can attach validation results
 - can detect patch intent
 - can report task outcome
+- can report context usage signals
+- can preserve context-pack references through compaction
 - fallback behavior verified
 
 ### Local data model and migrations
@@ -231,6 +310,8 @@ Components:
 - migration system
 - index versioning
 - cache schema versioning
+- context-pack ABI versioning
+- attribution schema versioning
 - memory schema versioning
 - provenance schema versioning
 - backward compatibility policy
@@ -251,9 +332,48 @@ Contract fields:
 - artifact retention policy
 - per-host exposure policy
 
-### Outcome attribution
+### Attribution loop
+
+The attribution loop is how Horizon learns whether its context packs, retrieval choices, memory facts, validations, and interventions actually improved the agent session.
 
 Self-optimization should distinguish between Horizon helping, hurting, or being irrelevant. Otherwise telemetry becomes noise.
+
+Inputs:
+
+- context-pack manifest
+- context item IDs
+- session transcript
+- host tool calls
+- file reads
+- file edits
+- terminal commands
+- validation runs
+- failed validations
+- repeated scans
+- hallucinated-symbol incidents
+- user corrections
+- reverted patches
+- final task outcome
+- follow-up fixes
+
+Signals:
+
+- context used
+- context ignored
+- context missing
+- context stale
+- context over-included
+- file edited without prior inclusion
+- file read repeatedly despite available context
+- memory used correctly
+- memory stale or misleading
+- validation caught a real issue
+- validation was expensive and irrelevant
+- intervention prevented a bad action
+- intervention interrupted unnecessarily
+- hallucinated file / symbol / API detected
+- user corrected supplied context or missing context
+- patch reverted after relying on bad context
 
 Attribution labels:
 
@@ -270,6 +390,48 @@ Attribution labels:
 - memory caused confusion
 - intervention useful
 - intervention annoying
+
+Attribution scopes:
+
+- individual snippet
+- symbol summary
+- file summary
+- context pack
+- retrieval query
+- retrieval strategy
+- memory fact
+- validation gate
+- host adapter
+- host model / agent profile
+- task type
+- repo area
+- branch / commit state
+
+Outputs:
+
+- retrieval weight updates
+- context-pack template updates
+- context budget changes
+- memory confidence changes
+- stale fact invalidation
+- negative knowledge writes
+- validation policy changes
+- host-specific rendering changes
+- intervention threshold changes
+- cost / savings estimates
+- regression cases for evals
+
+Attribution should avoid naive conclusions. A file being edited does not automatically mean it should have been included. A snippet being unused does not automatically mean it was bad. A validation passing does not automatically mean it was useful. Horizon needs enough event evidence to separate correlation from useful signal.
+
+Possible diagnostics:
+
+- `horizon blame-context`
+- `horizon explain-outcome`
+- `horizon show-unused-context`
+- `horizon show-missed-context`
+- `horizon show-wasted-validation`
+- `horizon show-context-savings`
+- `horizon replay-attribution`
 
 ## Background runtime
 
@@ -300,6 +462,8 @@ Components:
 - patch-intent extractor
 - repeated-scan detector
 - context-miss detector
+- context-usage detector
+- context-reference resolver
 - agent confusion detector
 - hallucinated-symbol detector
 - intervention policy
@@ -446,7 +610,7 @@ Components:
 
 ## Context system
 
-The context system gives agents the smallest sufficient context for the current task.
+The context system gives agents the smallest sufficient context for the current task through the Context Pack ABI.
 
 Components:
 
@@ -455,11 +619,14 @@ Components:
 - symbol / file retriever
 - dependency-neighborhood retriever
 - context-pack compiler
+- context-pack ABI emitter
 - context budgeter
 - compaction strategy
 - provenance-tagged snippets
+- attribution-ready context IDs
 - context freshness scoring
 - context-pack diffing
+- context-pack cache fingerprinting
 - host-specific context formatting
 - generated-file filtering
 - context exclusion reasoning
@@ -479,6 +646,7 @@ Uses:
 - memory proposal queue
 - memory approval workflow
 - memory confidence scoring
+- memory-to-context attribution
 
 ## Negative knowledge system
 
@@ -537,6 +705,7 @@ Components:
 - failure summarizer
 - validation escalation policy
 - validation de-escalation policy
+- attribution-informed validation routing
 
 ## Validation intelligence
 
@@ -551,6 +720,7 @@ Components:
 - historical failure correlation
 - minimal reproduction extractor
 - validation usefulness scoring
+- wasted-validation detector
 
 ## Build and test impact
 
@@ -641,6 +811,7 @@ Tasks:
 - validation cache warming
 - impacted-test map updates
 - post-task memory proposal generation
+- attribution replay
 - audit snapshot generation
 - cost / savings snapshot generation
 
@@ -734,6 +905,7 @@ Uses:
 - event ledger
 - context-pack snapshots
 - task replay
+- attribution replay
 - provenance diff
 - audit bundles
 - Repomix
@@ -763,6 +935,8 @@ Components:
 - before / after token comparison
 - before / after latency comparison
 - context precision / recall scoring
+- context usefulness scoring
+- attribution accuracy scoring
 - edit success scoring
 - validation usefulness scoring
 - hallucination incident tracking
@@ -777,6 +951,8 @@ Components:
 - `horizon.yaml`
 - repo policy schema
 - adapter capability schema
+- context-pack ABI schema
+- attribution policies
 - validation rule schema
 - memory promotion rules
 - context budget profiles
@@ -835,6 +1011,8 @@ Surfaces:
 
 - minimal status indicator
 - diagnostics command
+- context-pack inspector
+- attribution inspector
 - memory review
 - stale / conflict review
 - audit explorer
@@ -847,10 +1025,12 @@ Horizon's invisible work should be inspectable only when needed.
 Commands:
 
 - `why-this-context`
+- `why-not-this-context`
 - `why-this-validation`
 - `why-this-memory`
 - `why-this-warning`
 - `why-this-file`
+- `show-context-attribution`
 - `what-changed-since-last-run`
 - `show-agent-waste`
 - `show-savings`
@@ -861,6 +1041,8 @@ Horizon is:
 
 - a background optimization layer for agentic development
 - a host-agnostic repo intelligence system
+- a Context Pack ABI owner
+- an attribution loop for agent context
 - a context compiler
 - a verified memory layer
 - a negative-knowledge layer
