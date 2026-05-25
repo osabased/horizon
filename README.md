@@ -347,6 +347,53 @@ Uses:
 - local cache store
 - local artifact store
 
+## Memory and storage reuse candidates
+
+Horizon should reuse mature local primitives where possible, but keep its repo-specific fact semantics, provenance rules, negative knowledge, validation memory, and context-pack attribution custom.
+
+Very safe foundation:
+
+- SQLite for canonical local state, event ledger, facts, sessions, validation runs, context-pack metadata, cost ledger, and migrations
+- SQLite FTS5 for local full-text search over memory claims, docs chunks, validation failures, command output, session summaries, and context-pack items
+- ripgrep for fast source and text lookup outside indexed paths
+- Tree-sitter for syntax-aware parsing and source structure extraction
+
+Safe with caveats:
+
+- sqlite-vec for local vector search, semantic memory lookup, similar task capsules, similar validation failures, and docs / code chunk retrieval
+- Kuzu as an optional embedded graph projection for provenance traversal, conflict graphs, dependency graphs, file-to-test relationships, and symbol / fact relationships
+- SQLite edge tables as the first graph representation before adding a dedicated graph backend
+
+Projects / patterns to investigate or borrow from:
+
+- Graphiti for temporal fact graphs, provenance episodes, validity windows, contradiction / staleness ideas, and hybrid semantic / keyword / graph retrieval patterns
+- Mem0 for memory API patterns, user / session / agent memory separation, extraction flows, and CLI-style memory operations
+- LangMem for hot-path versus background memory management, memory extraction / consolidation / update patterns, and storage-agnostic memory tooling
+- vstash-style hybrid retrieval for a single-file local memory system combining SQLite, FTS, vector search, and reciprocal-rank fusion
+- Codebase-Memory / codebase-memory-mcp for persistent Tree-sitter code graphs, MCP code exploration, call-graph traversal, impact analysis, and token-reduction benchmark ideas
+
+Do not outsource to a generic memory system:
+
+- Horizon fact lifecycle
+- memory proposal queue
+- approved / rejected / stale fact policy
+- negative knowledge taxonomy
+- evidence priority resolver
+- branch / commit / worktree-scoped truth
+- context-pack attribution
+- validation usefulness memory
+- agent-waste ledger
+- stale fact invalidation
+- why-this-memory diagnostics
+
+Default posture:
+
+- reuse infrastructure aggressively
+- treat vector and graph stores as rebuildable indexes / projections
+- keep SQLite as the canonical local source of truth
+- keep Horizon's meaning layer custom
+- make optional backends prove they reduce token cost, latency, hallucination, or validation waste
+
 ## Repo understanding
 
 Horizon maintains a compact, queryable model of the codebase.
