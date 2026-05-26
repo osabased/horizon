@@ -12,6 +12,8 @@ Horizon is not an agentic IDE, editor, chat interface, terminal UI, or replaceme
 
 Every coding-agent session should begin with Horizon already knowing the project, already knowing what is stale or false, already knowing the cheapest useful validation route, already knowing the smallest sufficient task context, and already prepared to learn whether its support helped or hurt.
 
+Best case: a smaller, cheaper, faster host agent with Horizon should compete with a larger frontier agent without Horizon because Horizon supplies durable project intelligence instead of forcing the model to rediscover the repo every session.
+
 ## Product Boundary
 
 Horizon owns:
@@ -21,6 +23,7 @@ Horizon owns:
 - scoped project memory
 - negative knowledge
 - dependency/version reality
+- evidence selection
 - context compilation
 - Context Pack ABI
 - validation routing
@@ -28,7 +31,7 @@ Horizon owns:
 - exposure/redaction decisions
 - agent waste detection
 - outcome attribution
-- cost accounting
+- cost/leverage accounting
 - risk/confidence modeling
 - audit/replay
 - contract governance for Horizon ABIs
@@ -48,8 +51,19 @@ Horizon may influence host behavior through context, validation routing, policy 
 
 ## Design Law
 
-Every Horizon subsystem must improve at least one of:
+Every Horizon subsystem must improve the compounding chain:
 
+```text
+Evidence
+-> Context Pack ABI
+-> Host behavior
+-> Outcome attribution
+-> Better next run
+```
+
+A subsystem is justified when it measurably improves at least one of:
+
+- evidence quality
 - Context Pack quality
 - attribution quality
 - validation efficiency
@@ -58,10 +72,40 @@ Every Horizon subsystem must improve at least one of:
 - cost/latency reduction
 - host-agent reliability
 - user trust/auditability
+- replay/evaluation confidence
 
-If a subsystem does not improve one of these, it belongs outside Horizon.
+If a subsystem improves the chain, add it. If it does not improve the chain, it belongs outside Horizon or behind a replaceable capability interface.
 
-## Core Flow
+### Subsystem Admission Rule
+
+A proposed subsystem should answer:
+
+- Which object, event, ABI, or decision does it own?
+- Which existing plane consumes its output?
+- Which metric should improve because it exists?
+- What is its cost budget?
+- What invalidates its state?
+- How does it fail open?
+- How is its help, harm, or neutrality attributed?
+
+A subsystem that cannot be attributed cannot safely self-optimize.
+
+## Core Product Loop
+
+The public spine should stay simple:
+
+```text
+Task intent
+-> evidence selection
+-> Context Pack ABI
+-> host use
+-> outcome attribution
+-> better next pack
+```
+
+This is Horizon's product identity: compile the smallest sufficient, evidence-backed context; observe whether it helped; and improve the next run.
+
+## Full Control Loop
 
 ```text
 Observe locally
@@ -85,6 +129,69 @@ Observe locally
 -> replay, evaluate, regress, and prewarm future packs
 ```
 
+## Nested Loops
+
+Horizon should be built as nested loops rather than one mega-loop.
+
+### Evidence Loop
+
+```text
+repo/session/docs/artifacts
+-> EvidenceItem
+-> conflict resolution
+-> Fact / NegativeFact candidates
+-> pack-eligible context
+```
+
+### Pack Loop
+
+```text
+task intent
+-> ranked evidence
+-> budgeted Context Pack
+-> host-specific rendering
+-> usage observation
+```
+
+### Validation Loop
+
+```text
+risk / uncertainty
+-> cheapest useful check
+-> validation result
+-> validation usefulness attribution
+-> route update
+```
+
+### Waste Loop
+
+```text
+repeated scan / hallucination / stale read / ignored context
+-> waste signal
+-> negative knowledge or retrieval update
+-> next-pack improvement
+```
+
+### Attribution Loop
+
+```text
+session signal
+-> attribution hypothesis
+-> counterevidence
+-> confidence
+-> replay validation
+-> durable update or rejection
+```
+
+### Leverage Loop
+
+```text
+subsystem cost
+-> measured contribution
+-> net leverage score
+-> keep / tune / downgrade / remove / replace
+```
+
 ## Architectural Planes and Control Surfaces
 
 Horizon should be described as planes with durable contracts between them, not as a flat checklist of tools.
@@ -105,35 +212,18 @@ Horizon should be described as planes with durable contracts between them, not a
 13. Session Observation Plane
 14. Attribution + Self-Optimization Plane
 15. Evaluation + Replay Plane
-16. Explainability + User Surface Plane
-17. Contract Governance Plane
+16. Leverage Accounting Plane
+17. Explainability + User Surface Plane
+18. Contract Governance Plane
 ```
 
-## 1. Host Integration Plane
+## Plane Summaries
 
-The Host Integration Plane is the boundary between Horizon and existing coding agents.
+### 1. Host Integration Plane
 
-Horizon integrates underneath host tools without owning their UI, editor, terminal, patch generation, or interactive debugging loop.
+Boundary between Horizon and existing coding agents. Owns the Host Adapter ABI, opencode plugin, MCP server, host capability matrix, context injection, Context Pack rendering, usage tracking, session observation hooks, file-touch observation hooks, tool-call observation hooks, permission brokering, validation brokering, task result reporting, adapter degradation behavior, and adapter contract tests.
 
-### Responsibilities
-
-- Host Adapter ABI
-- opencode plugin
-- MCP server
-- host capability matrix
-- context injection
-- Context Pack rendering
-- context usage tracking
-- session observation hooks
-- file-touch observation hooks
-- tool-call observation hooks
-- permission brokering
-- validation brokering
-- task result reporting
-- adapter degradation behavior
-- adapter contract tests
-
-### Host Capability Levels
+Host capability should be explicit:
 
 ```text
 Level 0: Manual pack rendering
@@ -144,300 +234,45 @@ Level 4: Context-usage attribution
 Level 5: Permission and validation brokering
 ```
 
-Horizon should degrade from measured host capability, not optimistic assumptions.
+Horizon should degrade from measured capability, not optimistic assumptions.
 
-### Adapter Contract Tests
+### 2. Local Runtime + Event Ledger Plane
 
-Each adapter should prove whether it can:
+Horizon's local kernel. Owns `horizond`, repo watching, background scheduling, immutable event ledger, normalized event stream, SQLite canonical state, indexes, caches, artifact store, resource governor, cost ledger, migrations, recovery, and fail-open passthrough.
 
-- observe sessions
-- inject context
-- render Context Packs
-- read tool calls
-- observe file touches
-- attach validation results
-- broker permissions
-- detect patch intent
-- report task outcomes
-- report context usage signals
-- preserve Context Pack references through compaction
-- fall back safely when a capability is missing
+Guarantees: observations are recorded, derived signals are recomputable, packs are reproducible, decisions have provenance, indexes are rebuildable, caches have fingerprints, mutations are migratable, and risky runtime failure can fail open.
 
-Every host capability should have contract tests and a defined degradation behavior. Partial capability should be represented explicitly, not treated as full support.
+SQLite should remain the canonical local source of truth. Vector stores, graph stores, large-scale code search, and workflow engines should be replaceable capability modules or rebuildable projections.
 
-## 2. Local Runtime + Event Ledger Plane
+### 3. Trust Boundary + Exposure Plane
 
-The Local Runtime + Event Ledger Plane is Horizon's local kernel.
+Decides what Horizon may observe, store, expose, redact, send to a host, send to an external provider, or include in replay/audit artifacts.
 
-It makes Horizon warm, local-first, durable, recoverable, inspectable, and fail-open.
+No Context Pack should leave the local boundary or enter a host adapter without an `ExposureManifest` describing sensitive categories, redactions, exposure targets, host exposure level, provider exposure level, retention, audit export policy, and warnings.
 
-### Responsibilities
+### 4. Config + Policy Plane
 
-- `horizond`
-- repo watcher
-- background scheduler
-- immutable event ledger
-- normalized event stream
-- SQLite canonical state
-- index manager
-- cache manager
-- artifact store
-- resource governor
-- cost ledger
-- migration runner
-- corruption recovery
-- fail-open passthrough
+Lets repos configure Horizon without changing internals or relying on prompts. Policy compiles into typed decisions, not prompt text.
 
-### Runtime Guarantees
+Owns `horizon.yaml`, repo policy schema, adapter capability schema, Context Pack requirements, validation rules, memory promotion rules, attribution policies, context budget profiles, background task schedules, per-host overrides, generated-file rules, architecture/import rules, sensitive-action policy, exposure/redaction policy, and fail-open/fail-closed preferences by risk class.
 
-- Every observation is recorded.
-- Every derived signal is recomputable.
-- Every pack is reproducible.
-- Every decision has provenance.
-- Every index is rebuildable.
-- Every cache has a fingerprint.
-- Every mutation is migratable.
-- Every risky runtime failure can fail open.
+### 5. Ingestion + Extraction Plane
 
-### Canonical Storage Posture
+Converts raw repo/docs/session/artifact material into candidate evidence and candidate facts. Extraction does not write memory directly. It proposes evidence; fact lifecycle decides whether evidence becomes durable knowledge.
 
-SQLite should remain the canonical local source of truth.
+Inputs include source files, tests, local docs, external docs, changelogs, migration guides, API docs, screenshots, diagrams, PDFs, architecture notes, validation output, session traces, and generated reference material.
 
-Vector stores, graph stores, large-scale code search, and workflow engines should be treated as replaceable capability modules or rebuildable projections.
+Outputs include `EvidenceItem`, candidate `Fact`, candidate `NegativeFact`, provenance anchor, freshness metadata, invalidator, extraction confidence, artifact-derived context item, and claim-type classification.
 
-### Background Work Rule
+### 6. Workspace + Repo Intelligence Plane
 
-Every background task should declare:
+Turns a raw repo into a compact, queryable project model: what exists, how it relates, what owns it, what depends on it, what tests it, what constraints govern it, and how reliable that knowledge is.
 
-- cost budget
-- expected payoff
-- invalidation trigger
-- freshness requirement
-- eviction policy
-- safe interruption behavior
+Owns workspace state, repo snapshots, file/symbol indexes, imports, call relationships, package/dependency graphs, source/test affinity, ownership boundaries, architecture boundaries, service boundaries, provider/consumer maps, generated-code maps, vendored/build-artifact detection, monorepo/polyrepo support, multi-root support, branch/worktree/concurrency semantics, and repo contracts.
 
-A background optimizer that costs more than it saves is a product failure.
+### 7. Fact + Memory + Negative Knowledge Plane
 
-## 3. Trust Boundary + Exposure Plane
-
-The Trust Boundary + Exposure Plane decides what Horizon may observe, store, expose, redact, send to a host, send to an external docs provider, or include in a replay/audit artifact.
-
-Context Packs are powerful because they compress repo truth. That also makes them sensitive.
-
-### Responsibilities
-
-- local-only data classification
-- secret detection and redaction
-- network egress policy
-- per-host exposure policy
-- per-pack exposure manifest
-- transcript retention policy
-- artifact retention policy
-- docs-provider exposure policy
-- eval-provider exposure policy
-- audit export redaction
-- privacy-preserving cost reporting
-- privacy-preserving attribution reporting
-
-### Exposure Manifest
-
-No Context Pack should leave the local boundary or enter a host adapter without an `ExposureManifest`.
-
-An `ExposureManifest` should describe:
-
-- included sensitive categories
-- redacted fields
-- external exposure targets
-- host adapter exposure level
-- docs-provider exposure level
-- retention policy
-- audit export policy
-- user-visible warnings when needed
-
-### Trust Boundary Rule
-
-Local-first is not enough. Horizon must know and record what crosses each boundary.
-
-## 4. Config + Policy Plane
-
-The Config + Policy Plane lets repos configure Horizon without changing Horizon internals or relying on prompts.
-
-Policy should compile into typed decisions, not prompt text.
-
-### Responsibilities
-
-- `horizon.yaml`
-- repo policy schema
-- adapter capability schema
-- Context Pack requirements
-- validation rule schema
-- memory promotion rules
-- attribution policies
-- context budget profiles
-- background task schedules
-- per-host overrides
-- generated-file rules
-- architecture/import boundary rules
-- destructive-command policy
-- exposure/redaction policy
-- fail-open/fail-closed preferences by risk class
-
-### Policy Behavior Types
-
-```text
-context rules:
-  what must be included, excluded, warned, marked uncertain, or redacted
-
-validation rules:
-  what must be checked before or after a class of change
-
-intervention rules:
-  when Horizon stays silent, warns, challenges, blocks, or fails open
-
-exposure rules:
-  what may be shown to a host, sent externally, retained, exported, or replayed
-```
-
-## 5. Ingestion + Extraction Plane
-
-The Ingestion + Extraction Plane converts raw repo/docs/session/artifact material into candidate evidence and candidate facts.
-
-Extraction does not write memory directly. Extraction proposes evidence. Fact lifecycle decides whether evidence becomes durable knowledge.
-
-### Inputs
-
-- source files
-- tests
-- local docs
-- external docs
-- changelogs
-- migration guides
-- API docs
-- screenshots
-- diagrams
-- PDFs
-- architecture notes
-- validation output
-- session traces
-- generated reference material
-
-### Outputs
-
-- `EvidenceItem`
-- candidate `Fact`
-- candidate `NegativeFact`
-- provenance anchor
-- freshness metadata
-- invalidator
-- extraction confidence
-- artifact-derived context item
-- claim-type classification
-
-### Responsibilities
-
-- source chunking
-- symbol extraction
-- source/test affinity extraction
-- docs ingestion
-- changelog/migration-guide ingestion
-- dependency/API fact extraction
-- claim extraction
-- artifact extraction
-- provenance anchoring
-- invalidator generation
-- extraction confidence scoring
-
-## 6. Workspace + Repo Intelligence Plane
-
-The Workspace + Repo Intelligence Plane turns a raw repo into a compact, queryable project model.
-
-It answers what exists, how it relates, what owns it, what depends on it, what tests it, what constraints govern it, and how reliable that knowledge is.
-
-### Workspace State
-
-- branch
-- commit
-- dirty files
-- staged files
-- untracked files
-- detached HEAD state
-- merge conflict state
-- stash state
-- lockfile drift
-- installed dependency state
-- generated-file state
-- repo snapshot fingerprint
-- worktree identity
-- workspace root identity
-
-### Repo Understanding
-
-- file index
-- symbol index
-- imports
-- call relationships
-- package graph
-- dependency graph
-- source/test affinity
-- ownership boundaries
-- architectural boundaries
-- service boundaries
-- API provider/consumer map
-- generated-code source/output map
-- vendored and build-artifact detection
-
-### Multi-Repo and Workspace Graph
-
-- monorepo support
-- polyrepo support
-- linked package support
-- local dependency workspaces
-- multi-root repo support
-- shared config resolution
-- cross-package dependencies
-- service boundary maps
-- local provider/consumer relationships
-
-### Branch, Worktree, and Concurrency Semantics
-
-Horizon should scope facts, indexes, and attribution across:
-
-- multiple worktrees
-- multiple active branches
-- rebases
-- rewritten history
-- force-pushes
-- detached HEAD
-- stash state
-- merge conflict state
-- generated state per branch
-- dependency version per workspace
-- memory scoped to branch, commit range, dependency version, and workspace root
-
-### Repo Contracts
-
-Repo contracts encode durable rules that host agents should respect.
-
-- architectural boundaries
-- import rules
-- ownership rules
-- naming conventions
-- framework conventions
-- test conventions
-- migration policies
-- generated-code policies
-- forbidden-pattern rules
-- source-controlled Horizon checks
-
-## 7. Fact + Memory + Negative Knowledge Plane
-
-The Fact + Memory + Negative Knowledge Plane stores durable project knowledge without letting hallucinations become permanent.
-
-Memory is not a transcript cache. It is scoped truth management.
-
-### Fact Lifecycle
-
-Facts should move through explicit states.
+Stores durable project knowledge without letting hallucinations become permanent. Memory is not a transcript cache; it is scoped truth management.
 
 ```text
 observed
@@ -450,280 +285,33 @@ observed
 -> retired
 ```
 
-Every durable fact should include:
-
-- claim
-- claim type
-- scope
-- source
-- evidence
-- confidence
-- validity window
-- branch/worktree scope
-- dependency-version scope
-- contradictions
-- last validation
-- invalidators
-- attribution history
-
 Session claims are evidence, not facts. Agent claims are weak evidence unless validated.
 
-### Memory Types
+Negative knowledge is first-class: nonexistent symbols/files, deprecated APIs, unavailable APIs for the repo's dependency version, rejected approaches, failed fixes, misleading docs, generated files that should not be edited, flaky validations, expensive validations that rarely help, user-rejected suggestions, and patterns that caused reverted patches. Every `NegativeFact` must have invalidators.
 
-- approved facts
-- rejected facts
-- stale facts
-- repo conventions
-- architectural contracts
-- dependency/API facts
-- validation memory
-- user-confirmed project facts
-- external documentation facts
-- artifact-derived facts
-- attribution-derived facts
+Evidence priority must be typed by claim class, not global. Implementation truth, intended behavior truth, dependency/API truth, architecture policy truth, and historical outcome truth should each have distinct priority rules.
 
-### Negative Knowledge
+### 8. Change Intent Plane
 
-Negative knowledge is first-class. It prevents repeated agent waste.
+Converts vague user tasks into bounded implementation intent before retrieval, validation, and risk policy.
 
-Horizon should remember:
+A `TaskIntent` should describe what appears to be changing, what is out of scope, likely repo areas, risky areas, required facts, useful checks, success criteria, uncertainty, blast radius, and context budget shape.
 
-- nonexistent symbols
-- nonexistent files
-- deprecated APIs
-- unavailable APIs for the repo's dependency version
-- rejected approaches
-- failed fixes
-- misleading docs
-- generated files that should not be edited
-- flaky validations
-- expensive validations that rarely help
-- user-rejected suggestions
-- patterns that caused reverted patches
+### 9. Evidence Selection Plane
 
-Every `NegativeFact` must have invalidators.
+Turns task intent into ranked, scoped, conflict-aware candidate evidence.
 
-Common invalidators:
+Owns retrieval planning, lexical retrieval, symbol retrieval, dependency-neighborhood retrieval, source/test affinity retrieval, similar-task retrieval, memory retrieval, negative-knowledge retrieval, external-doc retrieval, evidence ranking, conflict detection, typed evidence priority, inclusion/exclusion rationale, context budget preallocation, and risk-aware omission detection.
 
-- dependency version changed
-- file appeared
-- symbol appeared
-- test added
-- user approved a new approach
-- branch changed
-- framework upgraded
-- generated output changed
-- repo contract changed
+### 10. Context Compilation + Context Pack ABI Plane
 
-### Evidence Priority Model
-
-When evidence conflicts, Horizon should resolve it with deterministic source priority.
-
-A single global order is not enough. Evidence priority should depend on claim type.
-
-#### Default Fallback Priority
-
-1. live worktree
-2. staged changes
-3. current branch
-4. lockfile / installed dependency state
-5. repo config
-6. tests
-7. source code
-8. local repo docs
-9. external versioned docs
-10. approved memory
-11. model prior knowledge
-
-#### Implementation Truth
-
-1. live worktree
-2. staged changes
-3. source code
-4. generated source map
-5. repo docs
-6. memory
-
-#### Intended Behavior Truth
-
-1. explicit user instruction
-2. tests
-3. acceptance criteria
-4. repo docs
-5. source behavior
-6. memory
-
-#### Dependency/API Availability Truth
-
-1. lockfile / installed dependency state
-2. package manager metadata
-3. local API surface
-4. versioned external docs
-5. changelog / migration guide
-6. model prior knowledge
-
-#### Architecture Policy Truth
-
-1. source-controlled Horizon policy
-2. repo config
-3. architecture docs
-4. existing import/dependency graph
-5. user-confirmed project facts
-
-#### Historical Outcome Truth
-
-1. replayable session trace
-2. validation run
-3. patch snapshot
-4. user correction
-5. attribution event
-6. memory summary
-
-The evidence priority model should govern retrieval ranking, fact conflict resolution, memory promotion, Context Pack inclusion, stale warning generation, validation routing, agent warning generation, and attribution confidence.
-
-## 8. Change Intent Plane
-
-The Change Intent Plane converts vague user tasks into bounded implementation intent before retrieval, validation, and risk policy.
-
-### Responsibilities
-
-- task intent extraction
-- affected capability resolution
-- repo area inference
-- non-goal detection
-- expected output classification
-- risk classification
-- blast-radius estimation
-- acceptance criteria generation
-- validation need estimation
-- context budget shaping
-- host capability matching
-
-### Outputs
-
-A change-intent object should describe:
-
-- what the user appears to be changing
-- what is explicitly out of scope
-- which repo areas are likely affected
-- which areas are risky
-- which facts are required
-- which tests or checks are likely useful
-- what a successful result should satisfy
-- what uncertainty remains
-
-## 9. Evidence Selection Plane
-
-The Evidence Selection Plane chooses what should be considered before a Context Pack is compiled.
-
-It turns task intent into ranked, scoped, conflict-aware candidate evidence.
-
-### Responsibilities
-
-- retrieval planning
-- lexical retrieval
-- symbol retrieval
-- dependency-neighborhood retrieval
-- source/test affinity retrieval
-- similar-task retrieval
-- memory retrieval
-- negative-knowledge retrieval
-- external-doc retrieval
-- evidence ranking
-- conflict detection
-- typed evidence priority
-- inclusion/exclusion rationale
-- context budget preallocation
-- risk-aware omission detection
-
-### Output
-
-Evidence Selection should produce a ranked evidence set with:
-
-- evidence IDs
-- claim types
-- provenance anchors
-- freshness metadata
-- scope
-- confidence
-- conflict markers
-- token/cost estimate
-- inclusion rationale
-- exclusion rationale when useful
-
-## 10. Context Compilation + Context Pack ABI Plane
-
-The Context Compilation + Context Pack ABI Plane is the product center.
-
-It turns selected evidence into compact, grounded, task-specific intelligence artifacts for host coding agents.
+Product center. Turns selected evidence into compact, grounded, task-specific intelligence artifacts for host coding agents.
 
 A Context Pack is a compiled artifact, not a prompt template. Rendered markdown is only one host-specific view.
 
-### Responsibilities
+A full Context Pack can contain ABI version, schema, manifest, task identity, host identity, repo identity, branch/commit/worktree fingerprint, dependency fingerprint, task summary, change intent, acceptance criteria, snippets, symbol summaries, file summaries, architectural contracts, conventions, source/test relationships, validation hints, dependency/API facts, external docs, approved memory, stale warnings, negative knowledge, generated-file warnings, risk notes, unknowns, inclusion/exclusion rationale, retrieval signals, confidence/risk scores, freshness metadata, token budget metadata, provenance anchors, redaction/exposure flags, exposure manifest, expected-use hints, attribution hook IDs, cache fingerprint, pack diff format, and compatibility policy.
 
-- Context Pack assembly
-- Context Pack ABI emission
-- pack manifest
-- provenance handles
-- attribution hook IDs
-- token budget enforcement
-- host-specific rendering
-- compaction-safe representation
-- redaction/exposure flags
-- pack quality gate
-- pack cache fingerprint
-- pack diff
-- pack replay
-- pack blame
-
-### Context Pack Contents
-
-A full Context Pack can contain:
-
-- ABI version
-- pack schema
-- pack manifest
-- task identity
-- host identity
-- repo identity
-- branch / commit / worktree fingerprint
-- dependency / lockfile fingerprint
-- task summary
-- change intent
-- acceptance criteria
-- relevant source snippets
-- symbol summaries
-- file summaries
-- architectural contracts
-- repo conventions
-- source/test relationships
-- validation hints
-- dependency/API facts
-- external documentation facts
-- approved memory
-- stale memory warnings
-- negative knowledge
-- generated-file warnings
-- risk notes
-- unknowns
-- inclusion rationale
-- exclusion rationale
-- retrieval signals
-- confidence score
-- risk score
-- freshness metadata
-- token budget metadata
-- provenance anchors
-- citation/reference handles
-- redaction/exposure flags
-- exposure manifest
-- expected-use hints
-- attribution hook IDs
-- cache fingerprint
-- pack diff format
-- compatibility/migration policy
-
-### Pack Lifecycle
+Pack lifecycle:
 
 ```text
 draft
@@ -741,90 +329,19 @@ draft
 -> replayed
 ```
 
-### Pack Quality Gate
+The quality gate should downgrade, warn, and mark unknowns before blocking. Blocking should be rare.
 
-Before a pack is emitted, Horizon should verify:
+### 11. Validation Routing Plane
 
-- repo snapshot is fresh enough
-- task scope is resolved enough
-- included facts are supported by evidence
-- every included item has provenance
-- stale or conflicting facts are marked
-- high-risk omissions are explicit
-- generated, vendored, minified, and build artifacts are filtered or flagged
-- token budget is respected
-- host rendering is safe for the target adapter
-- redaction rules have been applied
-- exposure manifest is attached
-- attribution hooks are attached
-- pack can be replayed
-- pack can be compared with later packs
-
-The quality gate should downgrade, warn, and mark unknowns before blocking. Blocking should be rare and reserved for exposure, secrets, destructive-action, or severe safety issues.
-
-### ABI Goals
-
-- Host agents can consume context without knowing Horizon internals.
-- Horizon can change retrieval internals without breaking host adapters.
-- Every item in the pack can be traced back to evidence.
-- Every item has a cost and a reason for inclusion.
-- Every omission can be explained when useful.
-- Every pack can be compared against later packs.
-- Every pack can participate in outcome attribution.
-
-## 11. Validation Routing Plane
-
-The Validation Routing Plane reduces uncertainty by selecting the cheapest useful check for the current change.
+Reduces uncertainty by selecting the cheapest useful check for the current change.
 
 Validation is not "run tests." Validation is risk -> uncertainty -> cheapest discriminating check -> result -> attribution.
 
-### Responsibilities
+Owns command discovery, impacted-test selection, typecheck/lint/static-analysis/security routing, architecture-rule checks, dependency/API drift checks, validation cache, failure summarization, escalation/de-escalation, flaky test registry, failure signature database, test ownership map, source/test affinity, historical failure correlation, minimal reproduction extraction, validation usefulness scoring, wasted-validation detection, runtime cost estimation, safe background execution classification, and attribution-informed routing.
 
-- command discovery
-- impacted-test selection
-- typecheck routing
-- lint routing
-- static-analysis routing
-- security scan routing
-- architecture-rule checks
-- dependency/API drift checks
-- validation cache
-- failure summarization
-- validation escalation
-- validation de-escalation
-- flaky test registry
-- failure signature database
-- test ownership map
-- test-to-source affinity map
-- historical failure correlation
-- minimal reproduction extraction
-- validation usefulness scoring
-- wasted-validation detection
-- runtime cost estimation
-- safe background execution classification
-- attribution-informed validation routing
+### 12. Intervention + Patch Recovery Plane
 
-### Command Discovery Sources
-
-- `package.json` scripts
-- `justfile`
-- `mise.toml`
-- `Makefile`
-- `Taskfile.yml`
-- `tox.ini`
-- `noxfile.py`
-- language-native test configs
-- CI workflow files
-
-Validation routing should minimize uncertainty, not maximize command execution.
-
-## 12. Intervention + Patch Recovery Plane
-
-The Intervention + Patch Recovery Plane interrupts only when Horizon has enough confidence that silence would be harmful.
-
-Horizon should be invisible by default.
-
-### Intervention Ladder
+Interrupts only when Horizon has enough confidence that silence would be harmful. Horizon should be invisible by default.
 
 ```text
 silent context injection
@@ -833,86 +350,23 @@ passive status note
 soft warning
 stale-context warning
 permission challenge
-destructive-action block
+sensitive-action block
 fail-open passthrough
 ```
 
-### Responsibilities
-
-- risky-edit detection
-- unexpected-file-change detection
-- destructive-action detection
-- stale-context warning
-- permission challenge
-- intervention thresholding
-- pre-task checkpoint
-- patch snapshot
-- rollback plan
-- partial rollback support
-- recovery bundle
-- audit bundle
-- fail-open passthrough
-
 Interventions should be attributed like context and validation. A warning can help, hurt, or annoy.
 
-## 13. Session Observation Plane
+### 13. Session Observation Plane
 
-The Session Observation Plane observes the host agent without becoming the host agent.
+Observes the host agent without becoming the host agent.
 
-It tracks how the agent used, ignored, or fought Horizon's support.
+Raw events include transcript events, host tool calls, file reads/writes, terminal commands, validation runs, permission prompts, compaction events, and final task result.
 
-Raw events should be immutable. Derived signals should be recomputable.
+Derived signals include repeated scan, context miss, context ignored, stale context reliance, hallucinated file/symbol/API, validation skipped then needed, user correction, reverted patch, task drift, repeated failed patch attempts, and host compaction losing important references.
 
-### Raw Session Events
+### 14. Attribution + Self-Optimization Plane
 
-- transcript events
-- host tool calls
-- file reads
-- file writes
-- terminal commands
-- validation runs
-- permission prompts
-- compaction events
-- final task result
-
-### Derived Session Signals
-
-- repeated scan
-- context miss
-- context ignored
-- stale context reliance
-- hallucinated file
-- hallucinated symbol
-- hallucinated API
-- validation skipped then needed
-- user correction
-- reverted patch
-- task drift
-- repeated failed patch attempts
-- host compaction losing important references
-
-### Responsibilities
-
-- transcript parsing
-- command/tool-call observation
-- file-touch observation
-- patch-intent extraction
-- context-reference resolution
-- host compaction observation
-- agent confusion detection
-- user-correction capture
-- reverted-patch capture
-- host behavior profile updates
-
-## 14. Attribution + Self-Optimization Plane
-
-The Attribution + Self-Optimization Plane is Horizon's learning mechanism.
-
-It learns whether Context Packs, retrieval choices, memory facts, validations, and interventions helped, hurt, or were irrelevant.
-
-### Attribution Model
-
-Attribution should be conservative, evidence-weighted, replayable, and reversible.
+Learns whether Context Packs, retrieval choices, memory facts, validations, interventions, and subsystems helped, hurt, or were irrelevant.
 
 ```text
 signal
@@ -927,185 +381,43 @@ signal
 
 A file being edited does not automatically mean it should have been included. A snippet being unused does not automatically mean it was bad. A validation passing does not automatically mean it was useful. A task succeeding does not automatically mean Horizon helped.
 
-### Attribution Inputs
+Attribution scopes include snippets, summaries, Context Packs, retrieval queries, retrieval strategies, memory facts, negative facts, validation routes, policy decisions, host adapters, host profiles, subsystems, task types, repo areas, and branch/commit state.
 
-- Context Pack manifest
-- context item IDs
-- session transcript
-- host tool calls
-- file reads
-- file edits
-- terminal commands
-- validation runs
-- failed validations
-- repeated scans
-- hallucinated-symbol incidents
-- user corrections
-- reverted patches
-- final task outcome
-- follow-up fixes
-- host capability profile
-- host behavior profile
+Updates must be conservative, confidence-scored, reversible, and replay-tested before they affect durable policy.
 
-### Attribution Labels
+### 15. Evaluation + Replay Plane
 
-- Horizon helped
-- Horizon hurt
-- Horizon was neutral
-- context missing
-- context over-included
-- context unused
-- context stale
-- validation saved time
-- validation wasted time
-- memory prevented repeat failure
-- memory caused confusion
-- intervention useful
-- intervention annoying
-- host adapter limited attribution
+Proves Horizon is actually improving agentic development instead of adding ceremony.
 
-### Attribution Scopes
+Horizon's claims are empirical: fewer tokens, lower latency, fewer repeated scans, fewer hallucinations, cheaper validation, better patches, and less agent confusion. Benchmarks are replay fixtures, not product truth.
 
-- individual snippet
-- symbol summary
-- file summary
-- Context Pack
-- retrieval query
-- retrieval strategy
-- memory fact
-- negative fact
-- validation route
-- validation gate
-- policy decision
-- host adapter
-- host model / agent profile
-- task type
-- repo area
-- branch / commit state
+Owns replayable sessions, Horizon-on/off ablations, golden task suites, SWE-bench-style adapters, mini-agent baseline runner, benchmark leakage warnings, weak-test warnings, patch outcome verifier, context precision/recall/usefulness scoring, attribution accuracy scoring, validation usefulness scoring, hallucination incident tracking, subsystem leverage scoring, regression benchmarks, audit bundles, provenance diffs, and cost/latency/token comparison.
 
-### Self-Optimization Outputs
+### 16. Leverage Accounting Plane
 
-- retrieval weight updates
-- Context Pack template updates
-- context budget changes
-- memory confidence changes
-- stale fact invalidation
-- negative knowledge writes
-- validation policy changes
-- host-specific rendering changes
-- intervention threshold changes
-- cost/savings estimates
-- regression cases for evals
-- host behavior profile updates
+Prevents the full vision from becoming random accumulation. It does not make Horizon conservative. It makes ambition falsifiable.
 
-Attribution updates must be conservative, confidence-scored, reversible, and replay-tested before they affect durable policy.
+Owns subsystem cost accounting, subsystem contribution accounting, token/latency delta tracking, repeated-scan reduction tracking, hallucination incident reduction tracking, validation waste reduction tracking, context precision/recall delta tracking, attribution confidence delta tracking, background-task payoff tracking, host-specific leverage profiles, and replace/downgrade/remove recommendations for low-leverage modules.
 
-## 15. Evaluation + Replay Plane
+A `SubsystemLeverageRecord` should describe subsystem name, owned objects/events/ABIs, consumed inputs, emitted outputs, cost budget, observed cost, expected payoff, observed payoff, attribution confidence, failure mode, invalidation trigger, downgrade behavior, and replacement candidate.
 
-The Evaluation + Replay Plane proves Horizon is actually improving agentic development instead of adding ceremony.
+Horizon should add any subsystem that improves the compounding chain, but every subsystem must remain accountable to cost, attribution, and replay.
 
-Horizon's claims are empirical: fewer tokens, lower latency, fewer repeated scans, fewer hallucinations, cheaper validation, better patches, and less agent confusion.
+### 17. Explainability + User Surface Plane
 
-Benchmarks are replay fixtures, not product truth.
+Makes Horizon inspectable without making it intrusive. Normal usage should stay inside the user's chosen coding agent.
 
-### Responsibilities
+Surfaces include minimal status indicator, diagnostics command, Context Pack inspector, attribution inspector, memory review, stale/conflict review, audit explorer, cost/savings report, and subsystem leverage report.
 
-- replayable sessions
-- Horizon-on / Horizon-off ablations
-- golden task suites
-- SWE-bench-style task adapters
-- mini-agent baseline runner
-- benchmark leakage warnings
-- weak-test warnings
-- patch outcome verifier
-- context precision scoring
-- context recall scoring
-- context usefulness scoring
-- attribution accuracy scoring
-- validation usefulness scoring
-- hallucination incident tracking
-- regression benchmarks
-- audit bundles
-- provenance diffs
-- cost / latency / token comparison
+Commands include `horizon pack build`, `horizon pack inspect`, `horizon pack diff`, `horizon pack replay`, `horizon pack explain`, `horizon pack blame`, `horizon why-this-context`, `horizon why-not-this-context`, `horizon why-this-validation`, `horizon why-this-memory`, `horizon why-this-warning`, `horizon why-this-file`, `horizon show-context-attribution`, `horizon show-unused-context`, `horizon show-missed-context`, `horizon show-wasted-validation`, `horizon show-agent-waste`, `horizon show-savings`, `horizon show-leverage`, and `horizon replay-attribution`.
 
-### Evaluation Questions
+### 18. Contract Governance Plane
 
-- Did Horizon reduce total tokens?
-- Did Horizon reduce repeated repo scanning?
-- Did Horizon reduce time-to-useful-edit?
-- Did Horizon reduce hallucinated files, symbols, or APIs?
-- Did Horizon select the smallest sufficient context?
-- Did Horizon over-include context?
-- Did Horizon miss important context?
-- Did validation routing catch real issues cheaply?
-- Did validation routing waste time?
-- Did memory help or mislead?
-- Did an intervention prevent harm or just annoy the user?
-
-## 16. Explainability + User Surface Plane
-
-The Explainability + User Surface Plane makes Horizon inspectable without making it intrusive.
-
-Normal usage should stay inside the user's chosen coding agent.
-
-### Surfaces
-
-- minimal status indicator
-- diagnostics command
-- Context Pack inspector
-- attribution inspector
-- memory review
-- stale/conflict review
-- audit explorer
-- cost/savings report
-
-### Explainability Commands
-
-- `horizon pack build`
-- `horizon pack inspect`
-- `horizon pack diff`
-- `horizon pack replay`
-- `horizon pack explain`
-- `horizon pack blame`
-- `horizon why-this-context`
-- `horizon why-not-this-context`
-- `horizon why-this-validation`
-- `horizon why-this-memory`
-- `horizon why-this-warning`
-- `horizon why-this-file`
-- `horizon show-context-attribution`
-- `horizon show-unused-context`
-- `horizon show-missed-context`
-- `horizon show-wasted-validation`
-- `horizon show-agent-waste`
-- `horizon show-savings`
-- `horizon replay-attribution`
-
-## 17. Contract Governance Plane
-
-The Contract Governance Plane keeps Horizon's internal and external contracts stable as the system evolves.
+Keeps Horizon's internal and external contracts stable as the system evolves.
 
 ABIs are not documentation. They are enforceable compatibility surfaces.
 
-### Responsibilities
-
-- ABI registry
-- schema versioning
-- compatibility rules
-- migration rules
-- deprecation policy
-- fixture corpus
-- contract tests
-- adapter conformance tests
-- replay compatibility checks
-- forward/backward compatibility reports
-- golden Context Pack fixtures
-- golden attribution fixtures
-- golden exposure fixtures
-- golden validation route fixtures
-
-### Contract Rule
+Owns ABI registry, schema versioning, compatibility rules, migration rules, deprecation policy, fixture corpus, contract tests, adapter conformance tests, replay compatibility checks, forward/backward compatibility reports, golden Context Pack fixtures, golden attribution fixtures, golden exposure fixtures, golden validation route fixtures, and golden leverage fixtures.
 
 Every plane should consume and emit typed objects. No plane should depend on another plane's internal storage.
 
@@ -1113,41 +425,16 @@ Every plane should consume and emit typed objects. No plane should depend on ano
 
 The Context Pack ABI is the spinal ABI, but the full system should have several durable contracts.
 
-### Context Pack ABI
-
-What Horizon gives to host agents.
-
-### Host Adapter ABI
-
-What Horizon expects from host integrations.
-
-### Attribution ABI
-
-How session events become learning signals.
-
-### Memory Fact ABI
-
-How durable project facts are stored, scoped, validated, challenged, promoted, and retired.
-
-### Validation Route ABI
-
-How checks are selected, run, cached, summarized, and attributed.
-
-### Policy Decision ABI
-
-How warnings, blocks, permissions, redactions, and fail-open behavior are represented.
-
-### Audit Bundle ABI
-
-How a session can be replayed, inspected, exported, or compared.
-
-### Exposure Manifest ABI
-
-How sensitive data, redaction, egress, retention, and audit exposure are represented.
-
-### Contract Version ABI
-
-How ABI versions, migrations, compatibility windows, and fixture conformance are represented.
+- Context Pack ABI: what Horizon gives to host agents.
+- Host Adapter ABI: what Horizon expects from host integrations.
+- Attribution ABI: how session events become learning signals.
+- Memory Fact ABI: how durable project facts are stored, scoped, validated, challenged, promoted, and retired.
+- Validation Route ABI: how checks are selected, run, cached, summarized, and attributed.
+- Policy Decision ABI: how warnings, blocks, permissions, redactions, and fail-open behavior are represented.
+- Audit Bundle ABI: how a session can be replayed, inspected, exported, or compared.
+- Exposure Manifest ABI: how sensitive data, redaction, egress, retention, and audit exposure are represented.
+- Contract Version ABI: how ABI versions, migrations, compatibility windows, and fixture conformance are represented.
+- Leverage Record ABI: how subsystem cost, payoff, attribution, and replacement decisions are represented.
 
 ## Core Object Model
 
@@ -1185,6 +472,7 @@ The full system should revolve around a small set of canonical objects.
 - `PatchSnapshot`
 - `AttributionEvent`
 - `CostRecord`
+- `SubsystemLeverageRecord`
 - `AuditBundle`
 - `ReplayCase`
 - `AbiSchema`
@@ -1230,10 +518,13 @@ Level 9: Behavioral Observation
 Level 10: Outcome Attribution
   assign help, hurt, neutral, missing, stale, overincluded, or wasted labels
 
-Level 11: Policy Improvement
+Level 11: Leverage Accounting
+  measure subsystem cost, payoff, and net contribution
+
+Level 12: Policy Improvement
   update retrieval, memory, validation, budgets, host profiles, and intervention thresholds
 
-Level 12: Replay and Eval
+Level 13: Replay and Eval
   prove that Horizon is reducing cost, latency, hallucination, and bad changes
 ```
 
@@ -1254,6 +545,7 @@ This is a capability map, not an implementation sequence.
 - attribution hooks
 - pack quality gate
 - adapter capability profile
+- subsystem leverage records
 - replayable audit bundle
 - contract governance
 
@@ -1268,6 +560,7 @@ This is a capability map, not an implementation sequence.
 - cost ledger
 - evidence ranking
 - replay runner
+- leverage scorer
 
 ### Optional Capability Modules
 
@@ -1283,33 +576,11 @@ This is a capability map, not an implementation sequence.
 
 Heavy backends are part of the full vision, but they should sit behind capability interfaces and remain replaceable.
 
-### Isolation
-
 - Firecracker for isolated validation and risky command execution
-
-### Reproducible Execution
-
-- Dagger
-- Nix
-- devcontainers
-
-### Workflow Durability
-
-- DBOS
-- Temporal
-
-### Orchestration Graphs
-
+- Dagger, Nix, and devcontainers for reproducible execution
+- DBOS and Temporal for workflow durability
 - LangGraph for explicit complex background reasoning graphs
-
-### Large-Scale Code Search
-
-- Sourcebot
-- Zoekt
-- livegrep
-
-### Graph Projections
-
+- Sourcebot, Zoekt, and livegrep for large-scale code search
 - Kuzu or SQLite edge tables for provenance traversal, conflict graphs, dependency graphs, file-to-test relationships, and symbol/fact relationships
 
 The rule is not to avoid heavy backends. The rule is that heavy backends must not leak into Horizon's meaning layer.
@@ -1330,7 +601,7 @@ Horizon does not own:
 - cloud-first repo indexing
 - model provider abstraction as a product
 
-Autonomous background work is allowed only when it improves future packs, validation, attribution, freshness, cost, auditability, or host reliability.
+Autonomous background work is allowed only when it improves future packs, validation, attribution, freshness, cost, auditability, host reliability, or subsystem leverage.
 
 ## Failure Modes and Adversarial Guardrails
 
@@ -1366,6 +637,10 @@ Hardening rule: Every host capability must have contract tests and a degradation
 
 Hardening rule: Every background task needs a cost budget, expected payoff, invalidation trigger, and eviction policy.
 
+### Subsystems accumulate without leverage
+
+Hardening rule: Every subsystem needs an owned object/event/ABI, cost budget, output consumer, leverage metric, attribution path, and downgrade behavior.
+
 ### Trust boundary is added too late
 
 Hardening rule: No Context Pack should leave the local boundary or enter a host adapter without an `ExposureManifest`.
@@ -1400,6 +675,7 @@ host adapters
 -> intervention and patch recovery
 -> session behavior observer
 -> attribution engine
+-> leverage accounting
 -> self-optimization system
 -> eval, replay, audit, explainability, and contract governance
 ```
