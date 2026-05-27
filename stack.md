@@ -14,6 +14,8 @@ Every coding-agent session should begin with Horizon already knowing the project
 
 Best case: a smaller, cheaper, faster host agent with Horizon should compete with a larger frontier agent without Horizon because Horizon supplies durable project intelligence instead of forcing the model to rediscover the repo every session.
 
+The agent's should become smarter with each use.
+
 ## Product Boundary
 
 Horizon owns:
