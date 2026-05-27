@@ -2,25 +2,23 @@
 
 This document extends `stack.md` with Horizon's full-vision experience-optimization system.
 
-This is not an MVP checklist or build order. It describes the end-state architecture for how Horizon turns prior repo, session, validation, replay, attribution, and leverage evidence into better future Horizon behavior.
+It is not an MVP checklist. It is also not permission to build an unbounded self-modifying machine. It defines the end-state loop by which Horizon turns prior repo, session, validation, replay, attribution, exposure, and leverage evidence into better future Horizon behavior.
 
-The point is not to turn Horizon into a patch-writing coding agent. Horizon should still sit underneath opencode, Codex, Claude Code, and other host agents. The point is to make Horizon better at what it owns:
+Horizon remains a support substrate underneath opencode, Codex, Claude Code, and other host agents. Experience optimization improves what Horizon owns:
 
 - evidence selection
 - Context Pack compilation
 - validation routing
-- memory policy
-- negative knowledge
+- fact, memory, and negative-knowledge policy
 - host adaptation
 - intervention policy
-- exposure policy
+- exposure and retention policy
 - attribution
-- replay
-- audit
+- replay and audit
 - leverage accounting
 - policy governance
 
-Experience optimization should improve Horizon as a support substrate, not replace the host agent.
+It must not make patch generation, chat UI, editor UI, or autonomous product work a core Horizon responsibility.
 
 ---
 
@@ -34,23 +32,91 @@ repo/session evidence
 -> host-agent behavior
 -> validation and patch outcome
 -> attribution
--> replay/eval result
+-> replay / audit / leverage result
 -> candidate Horizon behavior change
--> replay/ablation/regression/leverage gates
--> scoped durable Horizon behavior
+-> capability / replay / ablation / regression / exposure / leverage gates
+-> scoped reversible Horizon behavior
 ```
 
-A harness candidate may change how Horizon retrieves evidence, budgets context, formats a Context Pack, routes validation, promotes memory, emits negative knowledge, renders for a host, handles exposure, or decides when to warn.
+A candidate may change how Horizon retrieves evidence, budgets context, formats a Context Pack, routes validation, promotes memory, emits negative knowledge, renders for a host, handles exposure, or decides when to warn.
 
-It must not make user product patches a core Horizon responsibility.
+The optimization target is not "make Horizon more agentic." The target is:
+
+```text
+smaller sufficient context
++ fewer hallucinations
++ fewer repeated scans
++ cheaper useful validation
++ better host behavior
++ safer memory
++ lower cost
++ stronger auditability
+```
+
+---
+
+## Design Laws
+
+### 1. Optimize the harness, not the user's product code
+
+Experience optimization may propose changes to Horizon policy, retrieval, pack recipes, validation routes, memory rules, host rendering, exposure handling, and intervention thresholds.
+
+It must not make product patches a core Horizon responsibility.
+
+### 2. Learn only from observable evidence
+
+Every optimization must be gated by what Horizon actually observed.
+
+A host adapter that only injects context cannot support the same attribution claims as one that observes file touches, tool calls, validation runs, context usage, and permission events.
+
+Weak traces may produce diagnostics. They should not produce durable policy.
+
+### 3. Store experience as ledger-backed manifests
+
+The canonical source remains the local event ledger and artifact store. An `ExperienceRecord` points to raw or redacted artifacts; it does not duplicate the world into a separate warehouse.
+
+Experience optimization is a projection over durable events, not a parallel memory system.
+
+### 4. Retention and exposure are first-class
+
+Raw traces are valuable, but they are also costly and sensitive. Every experience artifact must have retention, exposure, redaction, and eviction policy.
+
+No trace, Context Pack, replay case, benchmark export, audit bundle, or candidate payload should cross a boundary without an `ExposureManifest`.
+
+### 5. Prefer small scoped deltas
+
+Candidates should start with the narrowest scope that explains the evidence:
+
+```text
+repo + host + task class + dependency scope + risk class
+```
+
+Global promotion should be rare.
+
+### 6. Promote slower than you diagnose
+
+Horizon should freely record, explain, and suggest. It should be conservative about automatic behavior changes.
+
+Candidate maturity should move through explicit modes:
+
+```text
+record-only
+-> diagnostic
+-> suggested
+-> shadow
+-> canary
+-> scoped promoted
+-> global promoted
+-> retired / reverted
+```
 
 ---
 
 ## Architectural Placement
 
-Experience Optimization is not merely another flat plane.
+Experience Optimization is the cross-plane control loop over attribution, replay, leverage, exposure, and governance.
 
-It is the cross-plane self-improvement control loop that consumes outputs from:
+It consumes outputs from:
 
 - Session Observation
 - Attribution + Self-Optimization
@@ -60,7 +126,7 @@ It is the cross-plane self-improvement control loop that consumes outputs from:
 - Contract Governance
 - Explainability + User Surface
 
-And emits scoped updates into:
+It emits scoped updates into:
 
 - Evidence Selection
 - Context Compilation
@@ -71,7 +137,7 @@ And emits scoped updates into:
 - Config + Policy
 - Leverage Accounting
 
-In `stack.md`, it can be represented as a dedicated **Experience Optimization Plane** after Evaluation + Replay and before durable policy promotion, but conceptually it is the governing optimization loop across replay, attribution, leverage, and contract governance.
+In `stack.md`, represent it as an **Experience Optimization Plane** after Evaluation + Replay and before durable policy promotion.
 
 ```text
 Session Observation
@@ -80,64 +146,35 @@ Session Observation
 -> Experience Optimization
 -> Leverage Accounting
 -> Contract Governance
--> scoped durable policy update
+-> scoped reversible policy update
 ```
-
----
-
-## Why This Belongs in Horizon
-
-Horizon's full stack already aims to observe repo state, compile task-specific context, watch host-agent behavior, attribute outcomes, replay sessions, and improve retrieval, memory, validation, risk, cost, and host behavior over time.
-
-Experience optimization makes that improvement loop explicit.
-
-Eval should not only answer:
-
-```text
-Did this run pass?
-```
-
-It should also answer:
-
-```text
-Which part of Horizon helped?
-Which part hurt?
-Which part wasted budget?
-Which evidence was missed?
-Which context was overincluded?
-Which validation route paid off?
-Which warning was useful or annoying?
-Which candidate Horizon behavior would improve the next run?
-Can that candidate survive replay, ablation, regression, exposure, and leverage gates?
-```
-
-The output should not be a report alone. It should be a candidate change to Horizon behavior, with evidence for why that change should be accepted, scoped, quarantined, or rejected.
 
 ---
 
 # Architecture
 
-Experience optimization has three major layers:
+Experience optimization has four layers:
 
 ```text
 1. Experience Substrate
 2. Candidate Optimization System
-3. Governance + Promotion System
+3. Evaluation + Attribution Gates
+4. Governance + Promotion System
 ```
 
-These layers keep the full vision ambitious without turning it into a flat list of machinery.
+The layers prevent the system from becoming a flat pile of machinery.
 
 ---
 
 ## 1. Experience Substrate
 
-The Experience Substrate preserves the evidence needed to understand whether Horizon helped, hurt, wasted effort, or missed something.
+The Experience Substrate preserves the evidence needed to know whether Horizon helped, hurt, wasted effort, missed something, or should have stayed silent.
 
-It is not a memory system. It is not a transcript cache. It is the replayable substrate for optimization.
+It is not a transcript cache. It is not durable memory. It is the replayable substrate for optimization.
 
 ```text
 host-agent session
--> normalized trace
+-> normalized events
 -> Context Pack record
 -> validation record
 -> attribution labels
@@ -145,17 +182,128 @@ host-agent session
 -> replayable ExperienceRecord
 ```
 
-### Experience Store
+### Event ledger as source of truth
 
-The Experience Store is a queryable local filesystem/database of prior runs, candidates, outcomes, failures, scorecards, and rejected hypotheses.
+The local event ledger remains canonical.
 
-It should preserve enough raw evidence to support replay, attribution, ablation, audit, and candidate generation.
+Experience records are manifests over existing objects:
 
-The optimizer must inspect raw experience, not only summaries. Human summaries are useful for review, but raw traces are the optimization substrate.
+- `RepoSnapshot`
+- `WorkspaceState`
+- `TaskIntent`
+- `ContextPack`
+- `PackQualityReport`
+- `ExposureManifest`
+- `ValidationRun`
+- `SessionTrace`
+- `PatchSnapshot`
+- `AttributionEvent`
+- `CostRecord`
+- `LeverageRecord`
+- `ReplayCase`
+- `AuditBundle`
 
-### Experience Store Contents
+The optimizer may inspect raw artifacts when policy allows, but durable memory promotion still goes through the Fact + Memory + Negative Knowledge lifecycle.
 
-The full-vision Experience Store should be able to preserve:
+### ExperienceRecord
+
+An `ExperienceRecord` is the canonical unit of optimization.
+
+It should be reproducible, inspectable, diffable, and policy-scoped.
+
+It includes:
+
+- record ID
+- task ID
+- repo identity
+- workspace identity
+- branch/worktree identity
+- dependency fingerprint
+- host identity
+- host capability profile
+- observation capability record
+- Context Pack ID
+- relevant EvidenceItem IDs
+- relevant Fact/NegativeFact IDs
+- validation run IDs
+- session trace ID
+- patch snapshot ID
+- attribution event IDs
+- cost record IDs
+- exposure manifest ID
+- retention class
+- replay compatibility class
+- replay artifact pointers
+- candidate links
+- promotion/rejection/rollback links
+
+The record points to artifacts. It should not inline everything.
+
+### Observation Capability Contract
+
+Every host adapter must declare what was actually observable for the session.
+
+```text
+L0: Manual pack rendering only
+L1: Context injection observed
+L2: File-touch observation
+L3: Tool-call and validation observation
+L4: Context-usage attribution signals
+L5: Permission and validation brokering
+```
+
+Optimization rules:
+
+- L0-L1 can support pack diagnostics and user-visible reports.
+- L2 can support retrieval and missed/overincluded-context hypotheses.
+- L3 can support validation-route and tool-use hypotheses.
+- L4 can support host-specific rendering and context-usage attribution.
+- L5 can support intervention, permission, and validation-brokering policy.
+
+A candidate must declare the minimum observation level required to justify it.
+
+### Retention classes
+
+Every experience artifact gets a retention class.
+
+```text
+raw-retained
+redacted-retained
+summary-only
+scorecard-only
+discard-after-window
+```
+
+Retention policy should consider:
+
+- sensitivity
+- replay value
+- attribution value
+- cost
+- artifact size
+- exposure scope
+- invalidation triggers
+- user/repo policy
+
+Raw retention is useful but should not be the default for every artifact.
+
+### Replay compatibility classes
+
+Replay is not always exact. Every record should say what kind of replay it supports.
+
+```text
+exact        same repo snapshot, same dependencies, same validation route
+near         comparable repo/dependency state with known drift
+synthetic    generated or normalized from a benchmark/provider
+diagnostic   useful for inspection, not promotion
+invalid      insufficient or unsafe for replay
+```
+
+Promotion gates must treat these classes differently.
+
+### Experience Store contents
+
+The full-vision store should preserve or point to:
 
 - task prompt
 - inferred task intent
@@ -173,15 +321,13 @@ The full-vision Experience Store should be able to preserve:
 - retrieval queries
 - included context
 - excluded context
-- inclusion rationale
-- exclusion rationale
+- inclusion/exclusion rationale
 - stale/conflict warnings
 - negative knowledge used
 - memory facts used
-- file reads
-- file writes
-- host-agent tool calls
-- terminal commands
+- observed file reads/writes where available
+- observed host tool calls where available
+- terminal commands where available
 - validation routes
 - validation output
 - validation cost
@@ -189,16 +335,14 @@ The full-vision Experience Store should be able to preserve:
 - patch snapshot
 - patch verdict
 - attribution labels
-- cost records
-- latency records
-- token records
+- cost, latency, and token records
 - hallucination incidents
 - repeated-scan signals
 - ignored-context signals
 - missed-context signals
 - user corrections
 - reverted-patch signals
-- candidate policy/config/code
+- candidate declarations
 - candidate scorecards
 - replay diffs
 - ablation deltas
@@ -208,47 +352,19 @@ The full-vision Experience Store should be able to preserve:
 - promotion decisions
 - rollback decisions
 
-### Experience Record
+### Query surface
 
-An `ExperienceRecord` is the canonical unit of optimization.
-
-It should be reproducible, inspectable, and diffable.
-
-It should include:
-
-- record ID
-- task ID
-- repo identity
-- workspace identity
-- host identity
-- Context Pack ID
-- relevant EvidenceItem IDs
-- relevant Fact/NegativeFact IDs
-- validation run IDs
-- session trace ID
-- patch snapshot ID
-- attribution event IDs
-- cost record IDs
-- exposure manifest ID
-- replay compatibility metadata
-
-The record should point to raw artifacts rather than duplicating every artifact inline.
-
-### Query Surface
-
-The Experience Store should be inspectable through normal local tools:
+Keep the first command surface small.
 
 ```text
 horizon experience list
-horizon experience show <run>
-horizon experience grep <pattern>
-horizon experience diff <run-a> <run-b>
-horizon experience trace <run>
-horizon experience frontier
-horizon experience rejected
+horizon experience show <record>
+horizon experience diff <record-a> <record-b>
+horizon experience trace <record>
+horizon optimization report
 ```
 
-A dashboard may summarize this, but the command surface should remain the canonical governance surface.
+Add richer commands only after the underlying objects exist.
 
 ---
 
@@ -256,55 +372,102 @@ A dashboard may summarize this, but the command surface should remain the canoni
 
 The Candidate Optimization System turns experience into proposed changes to Horizon behavior.
 
-It does not directly patch the user's product code. It proposes changes to Horizon's harness: retrieval, pack compilation, validation routing, memory policy, negative knowledge, host rendering, exposure policy, and intervention thresholds.
+It does not patch product code. It proposes changes to Horizon's harness.
 
 ```text
-Experience Store
--> candidate generation
+ExperienceRecord set
+-> signal cluster
+-> attribution hypothesis
+-> HarnessCandidate
 -> cheap contract checks
--> replay evaluation
--> causal ablation
--> regression suite
--> leverage accounting
+-> replay / ablation / regression / exposure / leverage gates
 -> quarantine / promotion / rejection
 ```
 
-### Harness Candidate
+### Candidate primitive types
 
-A `HarnessCandidate` is a proposed change to Horizon's support behavior.
+Keep the primitive model small.
+
+```text
+RetrievalDelta
+PackDelta
+ValidationDelta
+PolicyDelta
+```
+
+These four primitives cover the broader behavior space without creating an object taxonomy too early.
+
+#### RetrievalDelta
+
+Changes how Horizon finds, ranks, filters, or budgets evidence.
 
 Examples:
 
-- retrieval strategy candidate
-- evidence-ranking candidate
-- Context Pack recipe candidate
-- context-budget candidate
-- host-specific pack-rendering candidate
-- validation-route candidate
-- memory-promotion candidate
-- negative-knowledge candidate
-- stale/conflict policy candidate
-- intervention-threshold candidate
-- host-adapter behavior candidate
-- background prewarm candidate
-- exposure/redaction policy candidate
-- benchmark-provider adapter candidate
-- attribution-labeling candidate
-- leverage-accounting candidate
+- source/test affinity tuning
+- symbol-neighborhood retrieval
+- dependency-neighborhood retrieval
+- similar-task retrieval
+- negative-knowledge retrieval
+- stale-doc demotion
+- generated-file exclusion
+- architecture-boundary weighting
+- external-doc retrieval threshold changes
 
-A candidate must be explicit enough to replay and diff. It should never be an informal note like "retrieve better context."
+#### PackDelta
 
-### Candidate Declaration
+Changes how Horizon compiles, budgets, orders, compresses, or renders Context Packs.
 
-A `HarnessCandidate` should declare:
+Examples:
+
+- smaller pack budget for low-risk tasks
+- expanded acceptance criteria for bugfixes
+- host-specific summary-first rendering
+- stronger negative-knowledge section for repeated hallucinations
+- conflict warnings moved earlier
+- provenance compression rules
+- unknown/risk section promoted or demoted by task class
+
+#### ValidationDelta
+
+Changes how Horizon selects, caches, escalates, suppresses, or summarizes validation.
+
+Examples:
+
+- impacted tests before full suite
+- skip historically useless checks for a task class
+- escalate from typecheck to integration test when risk exceeds threshold
+- mark flaky checks as lower-confidence
+- prefer cheap static checks for API-surface edits
+- route generated-file changes differently
+
+#### PolicyDelta
+
+Changes Horizon policy around memory, negative knowledge, exposure, host adaptation, intervention, permissions, or retention.
+
+Examples:
+
+- stricter promotion threshold for agent-derived facts
+- shorter invalidation windows for dependency/API facts
+- repo-local scope for user-rejected approaches
+- host-specific exposure downgrade
+- stale-context warning only when conflicting evidence exists
+- permission challenge for destructive commands
+- shorter raw-trace retention for sensitive sessions
+
+### HarnessCandidate declaration
+
+A `HarnessCandidate` must be explicit enough to replay, diff, scope, and roll back.
+
+It declares:
 
 - candidate ID
 - parent candidate or baseline
-- candidate kind
+- primitive type
 - changed policy/config/code
 - intended task classes
 - intended repo scopes
 - intended host scopes
+- required host observation capability
 - expected metric improvement
 - expected cost
 - affected Horizon objects
@@ -321,105 +484,11 @@ A `HarnessCandidate` should declare:
 - benchmark-specificity risk
 - promotion scope
 - quarantine scope
+- maturity mode
 
-### Candidate Kinds
+A candidate should never be an informal note like "retrieve better context."
 
-Candidate kinds should map to Horizon's owned behavior:
-
-#### Retrieval Candidates
-
-Change how Horizon finds and ranks evidence.
-
-Examples:
-
-- source/test affinity tuning
-- symbol-neighborhood retrieval
-- dependency-neighborhood retrieval
-- similar-task retrieval
-- negative-knowledge retrieval
-- stale-doc demotion
-- generated-file exclusion
-- architecture-boundary weighting
-- external-doc retrieval thresholds
-
-#### Pack Recipe Candidates
-
-Change how Horizon compiles, budgets, orders, or renders Context Packs.
-
-Examples:
-
-- smaller pack budget for low-risk tasks
-- expanded acceptance criteria section for bugfixes
-- host-specific summary-first rendering
-- stronger negative-knowledge section for repeated hallucinations
-- conflict warnings moved earlier in the pack
-- provenance compression rules
-- unknowns and risk notes promoted or demoted by task class
-
-#### Validation Route Candidates
-
-Change how Horizon selects, caches, escalates, or suppresses validation.
-
-Examples:
-
-- run impacted tests before full suite
-- skip historically useless checks for a task class
-- escalate from typecheck to integration test when risk exceeds threshold
-- mark flaky checks as lower-confidence
-- prefer cheap static checks for API-surface edits
-- route generated-file changes differently
-
-#### Memory Policy Candidates
-
-Change when evidence becomes durable fact or negative knowledge.
-
-Examples:
-
-- stricter promotion threshold for agent-derived facts
-- shorter invalidation windows for dependency/API facts
-- repo-local scope for user-rejected approaches
-- negative facts attached to dependency versions
-- stronger contradiction handling for stale docs
-
-#### Host Adaptation Candidates
-
-Change how Horizon supports a specific host agent.
-
-Examples:
-
-- different pack rendering for hosts that ignore long sections
-- validation hints formatted differently per host
-- intervention threshold tuned by host behavior profile
-- context ordering adjusted for hosts with poor long-context use
-- fallback behavior for lower-capability adapters
-
-#### Intervention Candidates
-
-Change when Horizon stays silent, warns, challenges, or blocks.
-
-Examples:
-
-- lower warning threshold for sensitive file edits
-- higher warning threshold for low-risk repeated scans
-- stale-context warning only when conflicting evidence exists
-- permission challenge for destructive commands
-- fail-open behavior for uncertain pack quality
-
-#### Exposure Candidates
-
-Change redaction, retention, export, or provider exposure behavior.
-
-Examples:
-
-- stricter redaction for product-session traces
-- different retention for validation logs
-- host-specific exposure downgrade
-- benchmark export scrubber
-- audit bundle minimization rules
-
----
-
-## Candidate Generation
+### Candidate sources
 
 Candidates may be generated from:
 
@@ -439,40 +508,79 @@ Candidates may be generated from:
 - attribution labels with high confidence
 - leverage records showing low net value
 - regression clusters
-- rejected hypotheses that become relevant again after invalidation
+- rejected hypotheses that become relevant after invalidation
 
-Candidate generation should prefer small, scoped deltas over broad behavior changes.
+Candidate generation should prefer narrow deltas over broad behavior changes.
+
+### Candidate maturity
+
+Candidates move through explicit maturity modes.
+
+```text
+record-only
+-> diagnostic
+-> suggested
+-> shadow
+-> canary
+-> scoped promoted
+-> global promoted
+-> retired / reverted
+```
+
+#### Record-only
+
+The signal is stored but not acted on.
+
+Use this for low-confidence or low-observability evidence.
+
+#### Diagnostic
+
+Horizon can show the issue in reports, but it does not propose a behavior change yet.
+
+#### Suggested
+
+Horizon proposes a candidate for human or governance review.
+
+#### Shadow
+
+The candidate runs in parallel against future sessions or replay cases without affecting host behavior.
+
+#### Canary
+
+The candidate affects a narrow scope with rollback monitoring.
+
+#### Scoped promoted
+
+The candidate becomes durable only inside an explicit scope.
+
+#### Global promoted
+
+The candidate becomes general Horizon behavior.
+
+This should be rare and evidence-heavy.
 
 ---
 
-## Candidate Lifecycle
+## 3. Evaluation + Attribution Gates
+
+Experience optimization must prove that a candidate helps beyond baseline Horizon and does not merely exploit weak tests, benchmarks, or noisy attribution.
+
+### Required gates
+
+Minimum promotion gates:
 
 ```text
-proposed
--> contract-checked
--> replayed
--> ablated
--> regression-tested
--> exposure-checked
--> leverage-scored
--> quarantined / promoted / rejected
--> monitored
--> reverted / narrowed / retired
+contract check
+observation capability check
+replay check
+baseline ablation
+nearby regression check
+exposure check
+cost/leverage check
+rollback check
 ```
 
-### Proposed
-
-The optimizer proposes a candidate from prior runs, traces, failures, scorecards, and rejected hypotheses.
-
-Candidates should begin with the narrowest scope that explains the evidence:
-
-```text
-repo + host + task class
-```
-
-Global candidates require stronger evidence.
-
-### Contract-checked
+### Contract check
 
 Cheap checks run before expensive replay:
 
@@ -482,264 +590,86 @@ Cheap checks run before expensive replay:
 - missing-field checks
 - host-adapter compatibility
 - exposure-policy compatibility
-- fixture conformance
-- migration compatibility
 - rollback availability
 
-### Replayed
+### Observation capability check
 
-The candidate runs against relevant ReplayCases and benchmark provider tasks.
+The candidate's evidence must be supported by the host/session capability level.
 
-Replay should include both:
+Examples:
+
+- Do not promote context-usage rules from sessions where context usage was not observable.
+- Do not promote validation-route rules from sessions where validation was run outside Horizon's observation boundary.
+- Do not infer host-specific pack formatting from a host adapter that only supports manual rendering.
+
+### Replay check
+
+Replay should include:
 
 - cases the candidate is expected to improve
-- nearby cases it might accidentally regress
+- nearby cases it might regress
+- stale-doc cases
+- distractor-context cases
+- generated-file avoidance cases
+- verifier-hacking cases
+- sessions where Horizon should stay silent
+- lower-capability host adapters
+- exposure-sensitive traces
 
-### Ablated
+### Baseline ablation
 
-The candidate is compared against baselines:
+A candidate should be compared against practical baselines:
 
 ```text
 host agent alone
 host agent + raw retrieved files
-host agent + Context Pack only
-host agent + validation routing only
-host agent + Context Pack + validation routing
+host agent + current Context Pack
+host agent + current validation routing
 host agent + full Horizon loop
-host agent + full Horizon loop + candidate change
+host agent + full Horizon loop + candidate
 ```
 
-Ablation should answer whether Horizon helped, and whether the candidate helped beyond baseline Horizon.
+Ablation should answer two questions:
 
-### Regression-tested
+```text
+Did Horizon help?
+Did the candidate help beyond current Horizon?
+```
 
-The candidate must not regress unrelated task classes, hosts, repos, exposure behavior, or safety behavior.
+### Regression check
 
-Regression testing should include:
+A candidate must not silently degrade unrelated task classes, hosts, repos, exposure behavior, or safety behavior.
+
+Regression checks should include:
 
 - unrelated task classes
 - stale-doc tasks
 - distractor-context tasks
 - generated-file avoidance tasks
-- verifier-hacking tasks
-- tasks where Horizon should stay silent
-- host adapters with lower capability levels
+- validation-heavy tasks
+- tasks where warnings should not fire
+- low-capability host adapters
 - exposure-sensitive traces
 
-### Exposure-checked
+### Exposure check
 
 No candidate should be promoted if it weakens exposure policy, stores unsafe traces as memory, or exports sensitive artifacts beyond their allowed boundary.
 
-Every candidate that changes trace handling, benchmark export, host rendering, memory promotion, or audit bundle generation must include an exposure review.
+Every candidate that changes trace handling, benchmark export, host rendering, memory promotion, or audit bundle generation requires exposure review.
 
-### Leverage-scored
+### Cost and leverage check
 
-The candidate is scored by net contribution, not only pass rate.
+A candidate is scored by net contribution, not only pass rate.
 
-A candidate that improves patch success but doubles token cost may still be bad. A candidate that cuts context in half but misses critical evidence may still be bad. A candidate that wins only by exploiting weak tests must be rejected or quarantined.
+A candidate can fail if it:
 
-### Quarantined
+- improves patch success while doubling token cost
+- reduces context size while missing critical evidence
+- improves benchmark score while hurting product sessions
+- increases warning frequency without strong harm reduction
+- depends on expensive background work with weak payoff
 
-A candidate that helps only a narrow benchmark, repo, task class, host, or dependency version should be quarantined behind an explicit scope rule instead of promoted globally.
-
-Quarantine is not failure. It is scoped usefulness.
-
-### Promoted
-
-Durable promotion requires:
-
-- replay evidence
-- causal ablation
-- regression checks
-- exposure checks
-- leverage accounting
-- rollback behavior
-- invalidation triggers
-- promotion scope
-
-Promotion should default to scoped behavior. Global durable behavior should require unusually strong evidence.
-
-### Monitored
-
-A promoted candidate remains reversible.
-
-Product-session evidence can:
-
-- confirm it
-- downgrade it
-- narrow it
-- quarantine it
-- retire it
-- revert it
-
----
-
-# Evaluation and Scoring
-
-## Optimization Targets
-
-Experience optimization should improve Horizon's core product claims:
-
-- smaller sufficient context
-- fewer repeated scans
-- fewer hallucinated files/symbols/APIs
-- fewer stale-context errors
-- better Context Pack precision
-- better Context Pack recall
-- better negative knowledge
-- better validation routing
-- less validation waste
-- better attribution accuracy
-- lower token cost
-- lower latency
-- lower host-agent confusion
-- better host-specific rendering
-- better replay confidence
-- better auditability
-- safer exposure behavior
-- better scoped policy updates
-- fewer user corrections
-- fewer reverted patches
-
-## Pareto Frontier, Not One Score
-
-Horizon should not optimize one scalar leaderboard score.
-
-Maintain Pareto frontiers across:
-
-- patch success
-- acceptance criteria satisfaction
-- context precision
-- context recall
-- context size
-- token cost
-- latency
-- validation cost
-- validation usefulness
-- hallucination reduction
-- repeated-scan reduction
-- stale-context reduction
-- attribution confidence
-- host-agent waste reduction
-- exposure risk
-- replay reproducibility
-- benchmark leakage risk
-- product-session relevance
-- user interruption rate
-
-Promotion should require a net improvement profile appropriate to the task class, host profile, repo scope, and risk class.
-
-## Leverage Accounting
-
-Experience optimization should feed Leverage Accounting, not bypass it.
-
-Every candidate should produce or update a `LeverageRecord` describing:
-
-- affected subsystem
-- baseline cost
-- candidate cost
-- observed payoff
-- expected payoff
-- attribution confidence
-- failure mode
-- invalidation trigger
-- downgrade behavior
-- replacement candidate
-- promotion scope
-
-A candidate should not survive merely because it improves a metric. It should survive because its net contribution justifies its cost and risk.
-
----
-
-# Benchmark Provider ABI
-
-Horizon should expose a Benchmark Provider ABI rather than depending on one benchmark.
-
-Providers normalize external and local benchmarks into Horizon objects:
-
-```text
-external benchmark task
--> BenchmarkProvider
--> ReplayCase
--> TaskIntent
--> RepoSnapshot
--> WorkspaceState
--> ValidationRoute
--> expected verdict
--> BenchmarkVerdict
-```
-
-Provider classes should include:
-
-- issue-resolution suites
-- SWE-bench-style patch suites
-- multilingual code suites
-- terminal-agent suites
-- real terminal replay suites
-- adversarial terminal suites
-- generated repo-specific suites
-- local golden suites
-- stale-doc suites
-- distractor-context suites
-- generated-file avoidance suites
-- verifier-hacking suites
-- tasks where Horizon should stay silent
-
-Benchmarks are fixtures, not product truth. They are useful because they create repeatable pressure, not because they fully represent real development.
-
-## Benchmark Verdict
-
-A `BenchmarkVerdict` should distinguish:
-
-- pass/fail result
-- verifier confidence
-- test weakness risk
-- benchmark leakage risk
-- product relevance
-- overfitting risk
-- task-class label
-- host compatibility
-- Horizon attribution confidence
-- validation route usefulness
-- exposure constraints
-
-Benchmark wins should not become durable policy without held-out replay, regression checks, causal ablation, leakage checks, and product-session evidence.
-
----
-
-# Product-Session Evidence
-
-Benchmark wins are not enough.
-
-Horizon should also learn from real host-agent sessions, with user privacy and exposure rules applied.
-
-Product-session evidence should measure:
-
-- did the host agent read fewer irrelevant files?
-- did it avoid repeated scans?
-- did it avoid hallucinated files or APIs?
-- did it use the Context Pack?
-- did it ignore useful context?
-- did it fight wrong context?
-- did validation catch a real issue?
-- did validation waste time?
-- did user correction indicate missing context?
-- did the patch get reverted?
-- did Horizon interrupt too often?
-- did Horizon remain invisible when it should have warned?
-- did Horizon warn when silence would have been better?
-- did exposure policy prevent unsafe trace reuse?
-- did cost decrease without quality loss?
-
-Product evidence is messier than benchmarks, but it is closer to Horizon's product truth.
-
----
-
-# Attribution Requirements
-
-Experience optimization depends on attribution quality.
-
-A task succeeding does not prove Horizon helped. A file being edited does not prove it should have been included. A snippet being ignored does not prove it was useless. A validation passing does not prove the validation route was useful. A warning being acknowledged does not prove it should have fired.
+### Attribution requirements
 
 Attribution labels should distinguish:
 
@@ -761,79 +691,116 @@ Attribution labels should distinguish:
 - exposure-sensitive
 - invalidated
 
-Durable policy updates should require enough evidence to separate Horizon helping from the host agent succeeding anyway.
+A task succeeding does not prove Horizon helped.
+A file being edited does not prove it should have been included.
+A snippet being ignored does not prove it was useless.
+A validation passing does not prove the validation route was useful.
+A warning being acknowledged does not prove it should have fired.
 
-Attribution confidence should affect promotion scope:
+Durable policy updates require enough evidence to separate Horizon helping from the host agent succeeding anyway.
+
+### Metric set
+
+Start with a small product-relevant metric set:
+
+- Context Pack size delta
+- context precision proxy
+- context recall proxy
+- missed-context incidents
+- overincluded-context incidents
+- repeated-scan delta
+- hallucinated file/symbol/API incidents
+- stale-context incidents
+- validation yield
+- validation waste
+- token cost delta
+- latency delta
+- user correction signals
+- reverted-patch signals
+- interruption regret
+- exposure risk delta
+- replay reproducibility
+
+Do not optimize one scalar leaderboard score.
+
+Pareto/frontier analysis may be useful later, but early governance should prefer explicit decisions:
 
 ```text
-low confidence   -> record only
-medium confidence -> scoped candidate
-high confidence  -> replay candidate
-very high confidence + regression safety -> scoped promotion
+better
+worse
+mixed
+inconclusive
+benchmark-specific
+unsafe
+too expensive
 ```
+
+### Benchmark evidence
+
+Benchmarks are fixtures, not product truth.
+
+Benchmark providers are useful for repeatable pressure, but benchmark wins should not become durable policy without:
+
+- held-out replay
+- leakage checks
+- causal ablation
+- regression checks
+- exposure checks
+- leverage accounting
+- product-session evidence when available
+
+Benchmark-only wins should be quarantined as benchmark-specific.
+
+### Product-session evidence
+
+Product-session evidence is messier than benchmarks but closer to Horizon's actual claim.
+
+It should measure:
+
+- did the host agent read fewer irrelevant files?
+- did it avoid repeated scans?
+- did it avoid hallucinated files or APIs?
+- did it use the Context Pack?
+- did it ignore useful context?
+- did it fight wrong context?
+- did validation catch a real issue?
+- did validation waste time?
+- did user correction indicate missing context?
+- did the patch get reverted?
+- did Horizon interrupt too often?
+- did Horizon remain silent when it should have warned?
+- did Horizon warn when silence would have been better?
+- did exposure policy prevent unsafe trace reuse?
+- did cost decrease without quality loss?
+
+### Agentic judges
+
+Agentic judges may produce diagnostic labels, cluster failures, and suggest candidate explanations.
+
+They do not replace executable replay, patch verification, causal ablation, exposure checks, or leverage gates.
 
 ---
 
-# Practical Outputs
+## 4. Governance + Promotion System
 
-Experience optimization should compile results into concrete Horizon updates.
-
-| Signal | Practical output |
-|---|---|
-| Useful context included | Promote retrieval rule or pack recipe |
-| Necessary context missed | Add retrieval edge, source/test affinity, or evidence requirement |
-| Irrelevant context included | Tighten budget/ranking/filter |
-| Context ignored | Reformat, shrink, reorder, or lower priority |
-| Context contradicted | Create conflict and stale warning |
-| Hallucinated API/file | Add negative fact or dependency-version fact |
-| Validation caught bug | Promote validation route for similar task class |
-| Validation wasted time | Downgrade route or increase threshold |
-| User corrected missing fact | Add candidate evidence, not durable memory yet |
-| Reverted patch | Add negative outcome evidence |
-| Candidate helps only benchmark | Quarantine as benchmark-specific |
-| Candidate adds cost without payoff | Downgrade/remove via leverage accounting |
-| Warning annoyed user | Raise intervention threshold or narrow scope |
-| Host ignored pack section | Change host rendering or reduce that section |
-| Exposure risk increased | Reject or require stricter redaction |
-
-The output should be concrete objects, not just prose reports:
-
-```text
-EvalReport
--> PolicyUpdateCandidate
--> ReplayEvidence
--> LeverageRecord
--> PackRecipeDelta
--> RetrievalStrategyDelta
--> ValidationRouteDelta
--> MemoryPolicyDelta
--> HostProfileDelta
--> InterventionPolicyDelta
--> ExposurePolicyDelta
--> RegressionGateResult
--> PromotionDecision
--> AuditBundle
-```
-
----
-
-# Governance + Promotion System
-
-Experience optimization needs governance because it changes Horizon behavior.
+Experience optimization changes Horizon behavior, so governance must be explicit.
 
 Governance decides whether a candidate is:
 
 - rejected
 - retained as evidence
+- diagnostic only
+- shadowed
+- canaried
 - quarantined to a scope
 - promoted to scoped durable policy
 - promoted globally
 - reverted
 - retired
 
-## Promotion Scope
+### Promotion scope
 
-Promotion scope should be explicit.
+Promotion scope must be explicit.
 
 Possible scopes:
 
@@ -851,9 +818,29 @@ Possible scopes:
 - exposure class
 - user-approved policy scope
 
-Global promotion should be rare and evidence-heavy.
+Default to narrow scope.
 
-## Rejected Hypotheses
+### Promotion record
+
+Every promoted candidate needs:
+
+- candidate ID
+- owner subsystem
+- promotion scope
+- evidence bundle
+- replay results
+- ablation results
+- regression results
+- exposure result
+- leverage result
+- rollback behavior
+- invalidation triggers
+- monitoring rule
+- review/expiry policy
+
+No candidate should become irreversible.
+
+### Rejected hypotheses
 
 Rejected hypotheses are first-class.
 
@@ -867,35 +854,82 @@ A rejected candidate may become useful later if:
 - exposure policy changes
 - prior counterevidence is invalidated
 
-The Experience Store should preserve rejected hypotheses with reasons and invalidators.
+Preserve rejected hypotheses with reasons and invalidators.
 
-## Rollback
+### Rollback
 
-Every promoted candidate needs:
+A candidate should be rolled back, narrowed, or quarantined when product evidence shows:
 
-- rollback behavior
-- invalidation triggers
-- monitoring rules
-- owner subsystem
-- compatibility range
-- evidence that justified promotion
-- evidence that would justify rollback
+- higher cost without payoff
+- increased hallucinations
+- increased missed context
+- validation waste
+- user correction clusters
+- reverted-patch clusters
+- exposure risk
+- host-specific degradation
+- benchmark overfitting
 
-No candidate should become irreversible.
+Rollback must be a normal path, not an exceptional failure.
 
 ---
 
-# Sibling ABIs to Add
+# Practical Outputs
 
-Add these to the Sibling ABIs section of `stack.md`:
+Experience optimization should produce concrete Horizon objects, not just prose reports.
+
+```text
+ExperienceRecord
+-> AttributionHypothesis
+-> HarnessCandidate
+-> CandidateScorecard
+-> ReplayEvidence
+-> AblationResult
+-> RegressionGateResult
+-> LeverageRecord
+-> PromotionDecision
+-> AuditBundle
+```
+
+Signal-to-output mapping:
+
+| Signal | Practical output |
+|---|---|
+| Useful context included | Promote or shadow a RetrievalDelta / PackDelta |
+| Necessary context missed | Add retrieval edge, evidence requirement, or source/test affinity candidate |
+| Irrelevant context included | Tighten budget, ranking, or filtering candidate |
+| Context ignored | Reformat, shrink, reorder, or lower priority |
+| Context contradicted | Create conflict and stale warning candidate |
+| Hallucinated API/file | Add negative fact or dependency-version fact candidate |
+| Validation caught bug | Promote validation route for similar task class |
+| Validation wasted time | Downgrade route or increase threshold |
+| User corrected missing fact | Add candidate evidence, not durable memory yet |
+| Reverted patch | Add negative outcome evidence |
+| Candidate helps only benchmark | Quarantine as benchmark-specific |
+| Candidate adds cost without payoff | Downgrade or remove via leverage accounting |
+| Warning annoyed user | Raise intervention threshold or narrow scope |
+| Host ignored pack section | Change host rendering or reduce that section |
+| Exposure risk increased | Reject or require stricter redaction |
+
+---
+
+# ABIs to Add
+
+Add the minimum durable contracts needed for this loop.
+
+- **Experience Record ABI**: how replayable session experience is represented as a ledger-backed manifest.
+- **Observation Capability ABI**: what the host/session actually allowed Horizon to observe.
+- **Harness Candidate ABI**: how retrieval, pack, validation, and policy deltas are represented.
+- **Optimization Run ABI**: how candidate traces, scorecards, ablations, regressions, and decisions are stored.
+- **Promotion Decision ABI**: how accepted, rejected, quarantined, reverted, and retired decisions are represented.
+- **Rejected Hypothesis ABI**: how failed candidate ideas are preserved with counterevidence and invalidators.
+
+Optional later:
 
 - **Benchmark Provider ABI**: how external and local benchmark suites normalize into Horizon replay cases.
-- **Harness Candidate ABI**: how candidate retrieval, pack, validation, memory, intervention, host-rendering, adapter, and exposure strategies are represented.
-- **Optimization Run ABI**: how candidate policies, traces, scorecards, ablations, regressions, and promotion decisions are stored.
-- **Experience Store ABI**: how full replay history is preserved and queried without compressing away diagnostic evidence.
 - **Benchmark Verdict ABI**: how benchmark outcomes, verifier confidence, leakage risk, and product relevance are represented.
-- **Promotion Decision ABI**: how accepted, rejected, quarantined, reverted, and retired candidate decisions are represented.
-- **Rejected Hypothesis ABI**: how failed candidate ideas are preserved with counterevidence and invalidators.
+
+Do not make benchmark infrastructure the center of the first implementation.
 
 ---
 
@@ -903,68 +937,184 @@ Add these to the Sibling ABIs section of `stack.md`:
 
 Add these to the Core Object Model:
 
-- `ExperienceStore`
 - `ExperienceRecord`
-- `BenchmarkProvider`
-- `BenchmarkVerdict`
+- `ObservationCapabilityRecord`
 - `HarnessCandidate`
+- `RetrievalDelta`
+- `PackDelta`
+- `ValidationDelta`
+- `PolicyDelta`
 - `OptimizationRun`
-- `OptimizationTrace`
 - `CandidateScorecard`
-- `ParetoFrontier`
-- `PolicyUpdateCandidate`
-- `PackRecipeDelta`
-- `RetrievalStrategyDelta`
-- `ValidationRouteDelta`
-- `MemoryPolicyDelta`
-- `HostProfileDelta`
-- `InterventionPolicyDelta`
-- `ExposurePolicyDelta`
-- `RegressionGateResult`
 - `ReplayEvidence`
 - `AblationResult`
+- `RegressionGateResult`
 - `PromotionDecision`
 - `RejectedHypothesis`
 - `QuarantineScope`
+
+Optional later:
+
+- `BenchmarkProvider`
+- `BenchmarkVerdict`
+- `ParetoFrontier`
 
 ---
 
 # Commands to Add
 
-Add these commands to the Explainability + User Surface Plane:
+Initial command surface:
 
 ```text
 horizon experience list
-horizon experience show <run>
-horizon experience grep <pattern>
-horizon experience diff <run-a> <run-b>
-horizon experience trace <run>
-horizon experience frontier
-horizon experience rejected
+horizon experience show <record>
+horizon experience diff <record-a> <record-b>
+horizon experience trace <record>
 
 horizon candidate list
 horizon candidate show <candidate>
-horizon candidate diff <candidate-a> <candidate-b>
 horizon candidate replay <candidate>
+horizon candidate decide <candidate> <shadow|canary|promote|quarantine|reject|rollback>
+
+horizon optimization report
+```
+
+Later command surface, only when justified:
+
+```text
 horizon candidate ablate <candidate>
 horizon candidate score <candidate>
-horizon candidate quarantine <candidate>
-horizon candidate promote <candidate>
-horizon candidate reject <candidate>
-horizon candidate rollback <candidate>
-
+horizon optimization rejected
+horizon optimization leverage
 horizon benchmark providers
 horizon benchmark import <provider>
 horizon benchmark run <provider>
-horizon benchmark verdict <run>
-
-horizon optimization report
-horizon optimization frontier
-horizon optimization rejected
-horizon optimization leverage
 ```
 
-These commands are inspection and governance surfaces. Normal usage should remain in the background.
+Normal usage should remain in the background. Commands exist for inspection, governance, and debugging.
+
+---
+
+# Implementation Sequence
+
+This section is a practical build order. It does not reduce the full vision; it prevents the full vision from becoming unbuildable.
+
+## Phase 0: Preconditions
+
+Required before experience optimization is useful:
+
+- event ledger
+- repo/workspace identity
+- Context Pack ABI
+- Context Pack provenance hooks
+- ExposureManifest
+- PackQualityReport
+- basic validation records
+- host capability profile
+- cost/token/latency records
+
+Without these, experience optimization becomes guesswork.
+
+## Phase 1: Record-only experience
+
+Build:
+
+- `ExperienceRecord` manifest
+- retention classes
+- replay compatibility class
+- observation capability record
+- minimal `horizon experience show`
+- minimal `horizon optimization report`
+
+Goal:
+
+```text
+Can Horizon explain what happened in a session without changing future behavior?
+```
+
+## Phase 2: Diagnostic attribution
+
+Build:
+
+- attribution labels
+- missed/overincluded context diagnostics
+- repeated-scan diagnostics
+- validation usefulness diagnostics
+- hallucinated file/API diagnostics
+- user correction and revert evidence capture
+
+Goal:
+
+```text
+Can Horizon identify likely help, harm, waste, and missing evidence without promoting policy?
+```
+
+## Phase 3: Candidate generation
+
+Build:
+
+- `HarnessCandidate`
+- four delta primitives
+- candidate declarations
+- candidate scorecards
+- suggested and shadow maturity modes
+
+Goal:
+
+```text
+Can Horizon propose small scoped changes that are explicit enough to replay and roll back?
+```
+
+## Phase 4: Replay and ablation
+
+Build:
+
+- local replay cases
+- baseline comparison
+- candidate replay
+- candidate ablation
+- nearby regression checks
+- exposure checks
+- leverage records
+
+Goal:
+
+```text
+Can Horizon prove a candidate improves over current Horizon, not just over a weak baseline?
+```
+
+## Phase 5: Scoped promotion
+
+Build:
+
+- promotion decisions
+- quarantine scopes
+- canary mode
+- rollback behavior
+- monitoring rules
+- rejected hypothesis store
+
+Goal:
+
+```text
+Can Horizon safely change narrow future behavior and undo it when evidence turns?
+```
+
+## Phase 6: Benchmark providers and frontier analysis
+
+Build only after product-session replay works:
+
+- benchmark provider adapters
+- benchmark verdicts
+- benchmark leakage checks
+- broader regression suites
+- Pareto/frontier analysis
+
+Goal:
+
+```text
+Can Horizon use benchmarks as pressure without confusing benchmark wins for product truth?
+```
 
 ---
 
@@ -972,63 +1122,51 @@ These commands are inspection and governance surfaces. Normal usage should remai
 
 ## Horizon becomes a coding agent
 
-Hardening rule: Experience optimization may propose Horizon policy, retrieval, validation, memory, rendering, exposure, adapter, and intervention changes. It must not make patch generation a core Horizon responsibility.
+Hardening rule: Experience optimization may change Horizon support behavior. It must not make patch generation a core responsibility.
 
-## Experience optimization becomes a flat pile of machinery
+## Experience optimization outruns observability
 
-Hardening rule: Keep the architecture layered:
-
-```text
-Experience Substrate
--> Candidate Optimization System
--> Governance + Promotion System
-```
-
-Objects, commands, ABIs, and lifecycle stages should map to one of these layers.
-
-## Optimization overfits to benchmark artifacts
-
-Hardening rule: Candidate policies may inspect benchmark traces, but durable promotion requires held-out replay, leakage checks, causal ablation, regression checks, leverage accounting, and product-session evidence. Benchmark-only wins must be marked benchmark-specific.
-
-## Raw traces become unsafe memory
-
-Hardening rule: Experience Store artifacts are evidence, not durable facts. Memory promotion still goes through fact lifecycle, scopes, invalidators, and exposure policy.
-
-## Summaries hide important failure evidence
-
-Hardening rule: Human summaries may exist, but optimization must preserve raw traces, scorecards, Context Packs, validation logs, replay diffs, attribution labels, and rejected hypotheses.
-
-## A candidate wins by increasing cost
-
-Hardening rule: Every candidate must be scored against cost, latency, token use, validation cost, and subsystem leverage. A correctness gain can still fail promotion if the cost profile is bad.
-
-## Agentic judges become ground truth
-
-Hardening rule: Agentic judges may produce diagnostic labels and review hints. They do not replace executable replay, patch verification, causal ablation, exposure checks, or leverage gates.
-
-## Product sessions leak sensitive information
-
-Hardening rule: Experience Store writes and exports must obey the Trust Boundary + Exposure Plane. No trace should be exposed to a host, provider, benchmark, or audit export without an ExposureManifest.
-
-## Candidate policies become irreversible
-
-Hardening rule: Every promoted candidate needs rollback behavior, invalidation triggers, monitoring, and promotion scope. Promotion is reversible.
-
-## Attribution learns false lessons
-
-Hardening rule: Attribution updates must be confidence-scored and counterevidence-aware. A successful task is not automatically evidence that Horizon helped.
-
-## Global promotion happens too easily
-
-Hardening rule: Candidate promotion should default to narrow scope. Global promotion requires repeated evidence across repos, hosts, task classes, and replay suites.
-
-## Optimization suppresses useful uncertainty
-
-Hardening rule: Horizon should preserve unknowns, conflicts, and uncertainty labels. A cleaner pack is not better if it hides important uncertainty.
+Hardening rule: A candidate cannot be promoted from evidence the adapter could not observe.
 
 ## Experience Store becomes expensive by default
 
-Hardening rule: Trace retention, artifact granularity, and indexing depth should be policy-controlled with cost budgets, retention rules, redaction rules, and eviction behavior.
+Hardening rule: Trace retention, artifact granularity, and indexing depth are policy-controlled with cost budgets, retention rules, redaction rules, and eviction behavior.
+
+## Raw traces become unsafe memory
+
+Hardening rule: Experience artifacts are evidence, not durable facts. Memory promotion still goes through fact lifecycle, scopes, invalidators, and exposure policy.
+
+## Summaries hide important failure evidence
+
+Hardening rule: Summaries are review surfaces. Replay and attribution depend on preserved artifacts when policy allows.
+
+## Optimization overfits to benchmark artifacts
+
+Hardening rule: Benchmark-only wins are quarantined. Durable promotion requires held-out replay, leakage checks, causal ablation, regression checks, exposure checks, leverage accounting, and product-session evidence where available.
+
+## A candidate wins by increasing cost
+
+Hardening rule: Every candidate is scored against cost, latency, token use, validation cost, and subsystem leverage.
+
+## Agentic judges become ground truth
+
+Hardening rule: Agentic judges provide diagnostic labels, not final authority.
+
+## Candidate policies become irreversible
+
+Hardening rule: Every promoted candidate has rollback behavior, invalidation triggers, monitoring, and scope.
+
+## Attribution learns false lessons
+
+Hardening rule: Attribution updates are confidence-scored and counterevidence-aware. A successful task is not automatically evidence that Horizon helped.
+
+## Global promotion happens too easily
+
+Hardening rule: Promotion defaults to narrow scope. Global promotion requires repeated evidence across repos, hosts, task classes, and replay suites.
+
+## Optimization suppresses useful uncertainty
+
+Hardening rule: Horizon preserves unknowns, conflicts, and uncertainty labels. A cleaner pack is not better if it hides important uncertainty.
 
 ---
 
@@ -1036,20 +1174,20 @@ Hardening rule: Trace retention, artifact granularity, and indexing depth should
 
 This addendum changes the stack as follows:
 
-1. Add an **Experience Optimization Plane** as the cross-plane optimization loop over attribution, replay, leverage, and governance.
+1. Add an **Experience Optimization Plane** as the cross-plane optimization loop over attribution, replay, leverage, exposure, and governance.
 2. Extend the **Evaluation + Replay Plane** so evals produce queryable experience, not just reports.
-3. Extend the **Attribution + Self-Optimization Plane** so attribution labels feed HarnessCandidates and PolicyUpdateCandidates.
+3. Extend the **Attribution + Self-Optimization Plane** so attribution labels feed `HarnessCandidate` objects.
 4. Extend the **Leverage Accounting Plane** so every candidate is scored by net leverage before promotion.
-5. Extend the **Trust Boundary + Exposure Plane** so product-session traces, benchmark exports, audit bundles, and candidate policies remain exposure-safe.
-6. Extend the **Contract Governance Plane** with Benchmark Provider, Harness Candidate, Optimization Run, Experience Store, Benchmark Verdict, Promotion Decision, and Rejected Hypothesis ABIs.
-7. Extend the **Explainability + User Surface Plane** with experience, candidate, benchmark, and optimization inspection commands.
-8. Extend the **Failure Modes and Adversarial Guardrails** with benchmark overfitting, unsafe trace memory, trace compression, judge overtrust, irreversible promotion, overbroad global promotion, and optimization cost creep.
+5. Extend the **Trust Boundary + Exposure Plane** so traces, benchmark exports, audit bundles, and candidate payloads remain exposure-safe.
+6. Extend the **Contract Governance Plane** with Experience Record, Observation Capability, Harness Candidate, Optimization Run, Promotion Decision, and Rejected Hypothesis ABIs.
+7. Extend the **Explainability + User Surface Plane** with minimal experience, candidate, and optimization inspection commands.
+8. Keep Benchmark Provider and Pareto Frontier machinery as later capability modules, not initial design centers.
 
 ---
 
 # Final Shape
 
-Experience optimization makes Horizon a self-improving support substrate:
+Experience optimization makes Horizon a self-imving support substrate:
 
 ```text
 host-agent session
@@ -1058,18 +1196,16 @@ host-agent session
 -> attribution and leverage record
 -> queryable experience
 -> candidate harness improvement
--> replay + ablation + regression + exposure + leverage gates
--> scoped durable update
+-> capability + replay + ablation + regression + exposure + leverage gates
+-> scoped reversible update
 ```
 
-The durable product claim becomes stronger:
+The durable product claim becomes:
 
 ```text
 Horizon does not just remember the repo.
 Horizon learns which support behavior actually makes coding agents cheaper, less confused, less repetitive, and less hallucination-prone.
 ```
-
-Experience optimization should be ambitious in scope but strict in governance.
 
 The end state is not a bigger coding agent. It is a closed-loop intelligence layer that learns how to support coding agents better while preserving Horizon's boundary, local-first trust model, auditability, and leverage discipline.
 
@@ -1080,11 +1216,11 @@ The end state is not a bigger coding agent. It is a closed-loop intelligence lay
 These sources motivate the design. They are not dependencies.
 
 - **Meta-Harness: End-to-End Optimization of Model Harnesses**  
-  Primary source for treating harness logic as optimizable code/config, preserving full execution traces, using prior candidate history, and optimizing over multi-objective frontiers.  
+  Source for treating harness logic as optimizable code/config, preserving execution traces, and optimizing over prior candidate history.  
   https://arxiv.org/abs/2603.28052
 
 - **DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines**  
-  Source for treating LM systems as composable programs that can be optimized against explicit metrics instead of hand-tuned prompt strings.  
+  Source for treating LM systems as composable programs optimized against explicit metrics instead of hand-tuned prompt strings.  
   https://arxiv.org/abs/2310.03714
 
 - **GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning**  
@@ -1092,7 +1228,7 @@ These sources motivate the design. They are not dependencies.
   https://arxiv.org/abs/2507.19457
 
 - **SWE-bench**  
-  Source for issue-resolution benchmark fixtures, reproducible patch evaluation, and SWE-bench-style benchmark adapters.  
+  Source for issue-resolution benchmark fixtures and reproducible patch evaluation.  
   https://www.swebench.com/  
   https://github.com/princeton-nlp/SWE-bench
 
@@ -1101,7 +1237,7 @@ These sources motivate the design. They are not dependencies.
   https://www.tbench.ai/
 
 - **Agent-as-a-Judge: Evaluate Agents with Agents**  
-  Source for step-level diagnostic evaluation of agent trajectories. Horizon may use this for labels and review hints, but durable policy updates should still require executable replay, causal ablation, and leverage gates.  
+  Source for step-level diagnostic evaluation of agent trajectories. Horizon may use this for labels and review hints, but durable policy updates still require executable replay, causal ablation, and leverage gates.  
   https://arxiv.org/abs/2410.10934
 
 - **No More, No Less: Task Alignment in Terminal Agents**  
@@ -1113,5 +1249,5 @@ These sources motivate the design. They are not dependencies.
   https://arxiv.org/abs/2604.17596
 
 - **TerminalWorld: Benchmarking Agents on Real-World Terminal Tasks**  
-  Source for real terminal replay benchmark providers and the need for provider diversity.  
+  Source for real terminal replay benchmark providers and provider diversity.  
   https://arxiv.org/abs/2605.22535
