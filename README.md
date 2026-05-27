@@ -31,7 +31,3 @@ Horizon owns durable repo intelligence, evidence selection, context compilation,
 ## Full vision
 
 The full system architecture, planes, ABIs, object model, guardrails, and optional capability modules live in [stack.md](./stack.md).
-
-## Current priority
-
-Context Pack ABI + attribution loop.
