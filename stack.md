@@ -4,11 +4,11 @@ Horizon is a local-first intelligence substrate for agentic development.
 
 Horizon does not replace OpenCode. It sits underneath OpenCode and makes it cheaper, less repetitive, less confused, and less likely to hallucinate by supplying durable project intelligence.
 
-The stack should be built around one rule:
+The stack is organized around one rule:
 
 > Do not rebuild solved infrastructure. Own the meaning layer.
 
-Horizon should wrap existing code-intelligence, memory, validation, evaluation, and observability systems through stable interfaces. Horizon’s custom value is the control loop: evidence selection, Context Pack compilation, provenance, validation routing, session observation, attribution, negative knowledge, and governed self-improvement.
+Horizon wraps existing code-intelligence, memory, validation, evaluation, and observability systems through stable interfaces. Horizon’s custom value is the control loop: evidence selection, Context Pack compilation, provenance, validation routing, session observation, attribution, negative knowledge, and governed self-improvement.
 
 ---
 
@@ -105,7 +105,7 @@ Horizon should not be:
 
 ---
 
-## Recommended External Substrates
+## External Substrates
 
 ### 1. Host Adapter Target
 
@@ -125,11 +125,11 @@ Use the OpenCode adapter for:
 * capability detection
 * attribution hook IDs
 
-Do not target Claude Code, Codex, Cursor, Aider, Continue, Cline, Roo Code, or other hosts in the MVP.
+Do not target Claude Code, Codex, Cursor, Aider, Continue, Cline, Roo Code, or other hosts.
 
 Other hosts may be studied for patterns, but they are not adapter targets.
 
-Horizon should optimize deeply for one host before generalizing.
+Horizon should optimize deeply for one host.
 
 ---
 
@@ -211,7 +211,7 @@ Use them for:
 
 Repo watching:
 
-* Watchman, optional
+* Watchman
 * native filesystem watcher fallback
 
 Use repo watching for:
@@ -222,7 +222,7 @@ Use repo watching for:
 * dependency fingerprint refresh
 * prewarming likely evidence
 
-Horizon should not build its own parser, code graph, route graph, symbol index, or filesystem watcher first.
+Horizon should not own its own parser, code graph, route graph, symbol index, or filesystem watcher unless existing systems fail the leverage test.
 
 Horizon should normalize outputs from these systems into Horizon `EvidenceItem`s.
 
@@ -247,7 +247,7 @@ Do not adopt ECC as Horizon’s product shape.
 
 Horizon should not become a cross-harness skill ecosystem.
 
-For MVP, Horizon should only implement:
+Horizon should only expose:
 
 * OpenCode Host Adapter ABI
 * Context Pack rendering contract
@@ -286,11 +286,11 @@ Use:
 
 * SQLite tables for canonical Horizon state
 * SQLite FTS5 for lexical search
-* `sqlite-vec` or equivalent for local vector search, if needed
+* `sqlite-vec` or equivalent for local vector search, if useful
 * append-only event tables for replay
 * rebuildable projections for graph/vector/search views
 
-Do not build:
+Do not own:
 
 * custom vector database
 * custom graph database
@@ -298,9 +298,9 @@ Do not build:
 * custom distributed code search
 * custom persistence engine
 
-Heavy projections may be added later, but they must remain rebuildable.
+Heavy projections may be added only if they remain rebuildable.
 
-Possible later modules:
+Possible modules:
 
 * Kuzu
 * DuckDB
@@ -333,12 +333,12 @@ Use:
 
 Execution substrates:
 
-* plain local shell first
+* plain local shell
 * devcontainers
 * Docker
 * Nix
 * Dagger
-* Firecracker only for high-risk isolation later
+* Firecracker for high-risk isolation
 
 Horizon owns:
 
@@ -351,7 +351,7 @@ Horizon owns:
 * validation usefulness attribution
 * wasted-validation detection
 
-Future validation-routing substrate:
+Advanced validation-routing substrate:
 
 * RIG-style repository intelligence graph
 * build graph
@@ -361,13 +361,13 @@ Future validation-routing substrate:
 
 Use these to improve impacted-test selection and validation routing.
 
-Do not build a full build system.
+Do not own a full build system.
 
 ---
 
 ### 8. Observability, Replay, and Evaluation
 
-Start simple:
+Use:
 
 * local event ledger
 * JSONL export
@@ -538,7 +538,7 @@ Policy compiles into typed decisions.
 
 ## 5. Repo Intelligence Adapter Plane
 
-Horizon should not build the repo graph from scratch.
+Horizon should not own the repo graph from scratch.
 
 It should adapt external backends into Horizon objects.
 
@@ -1055,9 +1055,9 @@ HostBehaviorProfile
 
 ---
 
-## What Not To Build From Scratch
+## What Horizon Should Not Own From Scratch
 
-Do not build these first:
+Horizon should not own these unless existing systems fail the leverage test:
 
 ```text
 custom parser/indexer
@@ -1085,9 +1085,9 @@ Use existing systems through adapters.
 
 ---
 
-## What Horizon Must Build
+## Horizon-Owned Core
 
-Build these directly:
+Horizon must own these directly:
 
 ```text
 OpenCode Host Adapter ABI
@@ -1114,153 +1114,26 @@ These are Horizon’s defensible core.
 
 ---
 
-## Recommended MVP Stack
-
-Use:
+## Full Stack Defaults
 
 ```text
-TypeScript
-Node.js
-SQLite
-SQLite FTS5
-sqlite-vec, optional
-MCP SDK
-OpenCode adapter
-codebase-memory-mcp adapter
-optional codegraph adapter
-ripgrep fallback search
-Watchman or native fs watcher
-local shell validation adapter
-Semgrep adapter
-horizon.yaml
-JSON Schema or Zod schemas
-CLI-first user surface
-```
-
-Avoid in MVP:
-
-```text
-custom code graph
-custom dashboard
-custom cloud service
-custom workflow engine
-custom sandbox
-custom vector database
-custom model routing layer
-custom agent framework
-multi-host adapter layer
-```
-
----
-
-## MVP Build Order
-
-### Phase 1: Thin Local Spine
-
-Build:
-
-* `horizond`
-* SQLite schema
-* event ledger
-* `horizon.yaml`
-* OpenCode Host Adapter ABI v0
-* Context Pack ABI v0
-* EvidenceItem schema
-* CLI commands
-
-Integrate:
-
-* MCP SDK
-* `codebase-memory-mcp` or `codegraph`
-* `ripgrep` fallback search
-
-Goal:
-
-```text
-Given a task, Horizon can query repo intelligence and emit a small evidence-backed Context Pack for OpenCode.
-```
-
----
-
-### Phase 2: Repo Evidence and Negative Knowledge
-
-Build:
-
-* evidence normalization
-* provenance anchors
-* fact lifecycle
-* negative facts
-* stale/conflict warnings
-* inclusion/exclusion rationale
-* generated-file warnings
-* exact lexical confirmation using ripgrep/git grep
-* repo watcher invalidation
-
-Goal:
-
-```text
-Horizon stops OpenCode from rediscovering false, stale, or irrelevant repo information.
-```
-
----
-
-### Phase 3: Validation Routing
-
-Build:
-
-* validation command discovery
-* simple risk classification
-* impacted-check selection
-* validation result storage
-* flaky/wasted validation tracking
-* Semgrep adapter
-* dependency/API drift checks
-
-Goal:
-
-```text
-Horizon recommends or runs the cheapest useful validation for a task.
-```
-
----
-
-### Phase 4: Session Observation and Attribution
-
-Build:
-
-* OpenCode event ingestion
-* file-touch observation
-* context-use signals
-* missed-context signals
-* validation-usefulness signals
-* attribution labels
-* pack usefulness scoring
-
-Borrow ideas from ECC hooks, but keep the implementation OpenCode-specific.
-
-Goal:
-
-```text
-Horizon learns whether its Context Packs helped, hurt, or were ignored.
-```
-
----
-
-### Phase 5: Governed Self-Optimization
-
-Build:
-
-* policy update candidates
-* replay validation
-* scoped promotion
-* rollback
-* leverage reports
-* audit bundle export
-
-Goal:
-
-```text
-Horizon improves future packs without turning weak observations into permanent truth.
+host target: OpenCode only
+host protocol: MCP
+language/runtime: TypeScript + Node.js
+canonical storage: SQLite
+lexical search: SQLite FTS5
+ad hoc lexical truth: ripgrep + git grep
+vector search: sqlite-vec where useful
+repo intelligence: codebase-memory-mcp
+alternate repo intelligence: codegraph
+repo watching: Watchman or native fs watcher
+harness pattern/reference: ECC
+generic memory: Hindsight, optional
+validation execution: local shell, Docker, devcontainers, Nix, Dagger, Firecracker where justified
+validation routing: project commands + Semgrep + CodeQL where useful
+schema validation: Zod or JSON Schema
+evaluation references: SWE-agent, mini-SWE-agent, OpenHands, GitTaskBench
+observability export: JSONL, SQLite traces, OpenTelemetry-compatible export
 ```
 
 ---
@@ -1283,32 +1156,6 @@ external backend result
 ```
 
 Backends can be replaced. Horizon ABIs should not break.
-
----
-
-## Default Dependency Choices
-
-Recommended defaults:
-
-```text
-host target: OpenCode only
-host protocol: MCP
-language/runtime: TypeScript + Node.js
-canonical storage: SQLite
-lexical search: SQLite FTS5
-ad hoc lexical truth: ripgrep + git grep
-vector search: optional sqlite-vec
-repo intelligence: codebase-memory-mcp
-alternate repo intelligence: codegraph
-repo watching: Watchman or native fs watcher
-harness pattern/reference: ECC
-generic memory: Hindsight, optional
-validation execution: local shell first
-validation routing: project commands + Semgrep + CodeQL where useful
-schema validation: Zod or JSON Schema
-evaluation references: SWE-agent, mini-SWE-agent, OpenHands, GitTaskBench
-observability export: JSONL first, OpenTelemetry later
-```
 
 ---
 
