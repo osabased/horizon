@@ -2,13 +2,13 @@
 
 Horizon is a local-first intelligence substrate for agentic development.
 
-It does not replace opencode, Claude Code, Codex, Cursor, Aider, or other coding agents. Horizon sits underneath them and makes them cheaper, less repetitive, less confused, and less likely to hallucinate by supplying durable project intelligence.
+Horizon does not replace OpenCode. It sits underneath OpenCode and makes it cheaper, less repetitive, less confused, and less likely to hallucinate by supplying durable project intelligence.
 
 The stack should be built around one rule:
 
 > Do not rebuild solved infrastructure. Own the meaning layer.
 
-Horizon should wrap existing code-intelligence, memory, harness, validation, and observability systems through stable interfaces. Horizon’s custom value is the control loop: evidence selection, Context Pack compilation, provenance, validation routing, attribution, negative knowledge, and governed self-improvement.
+Horizon should wrap existing code-intelligence, memory, validation, evaluation, and observability systems through stable interfaces. Horizon’s custom value is the control loop: evidence selection, Context Pack compilation, provenance, validation routing, session observation, attribution, negative knowledge, and governed self-improvement.
 
 ---
 
@@ -28,6 +28,7 @@ Horizon owns:
 * policy improvement
 * replay and audit
 * leverage accounting
+* OpenCode host integration
 
 Horizon does not own:
 
@@ -41,6 +42,8 @@ Horizon does not own:
 * full custom code graph engine
 * full custom parser/indexer
 * full custom harness ecosystem
+* multi-agent orchestration
+* agentic IDE replacement
 
 ---
 
@@ -48,11 +51,13 @@ Horizon does not own:
 
 ```text
 Task intent
--> evidence selection
--> Context Pack ABI
--> host-agent use
--> session observation
+-> evidence candidates
+-> conflict / freshness / priority resolution
+-> budgeted Context Pack
+-> OpenCode use
+-> session + validation observation
 -> outcome attribution
+-> scoped policy / memory update
 -> better next pack
 ```
 
@@ -64,7 +69,7 @@ Everything in the stack must improve at least one of:
 * repo truth freshness
 * validation efficiency
 * attribution accuracy
-* agent reliability
+* OpenCode reliability
 * cost reduction
 * token reduction
 * repeated-scan reduction
@@ -96,12 +101,68 @@ Horizon should not be:
 * another generic memory product
 * another code search product
 * another workflow automation platform
+* a general-purpose harness layer for every coding agent
 
 ---
 
 ## Recommended External Substrates
 
-### 1. Repo Intelligence Backend
+### 1. Host Adapter Target
+
+Primary and only host adapter target:
+
+* OpenCode
+
+Use the OpenCode adapter for:
+
+* Context Pack injection
+* context rendering
+* session hooks
+* file-touch observation
+* tool-call observation, if available
+* validation brokering
+* usage reporting
+* capability detection
+* attribution hook IDs
+
+Do not target Claude Code, Codex, Cursor, Aider, Continue, Cline, Roo Code, or other hosts in the MVP.
+
+Other hosts may be studied for patterns, but they are not adapter targets.
+
+Horizon should optimize deeply for one host before generalizing.
+
+---
+
+### 2. Host Interface
+
+Primary interface:
+
+* MCP SDK
+
+Use MCP for:
+
+* OpenCode-facing tool surface
+* Context Pack retrieval
+* repo intelligence queries
+* validation route requests
+* attribution/reporting calls
+* memory/fact inspection
+* explanation commands
+
+MCP is the integration protocol, not Horizon’s internal architecture.
+
+Horizon still owns:
+
+* Host Adapter ABI
+* Context Pack ABI
+* Evidence ABI
+* Validation Route ABI
+* Attribution ABI
+* Exposure Manifest ABI
+
+---
+
+### 3. Repo Intelligence Backend
 
 Primary candidate:
 
@@ -134,43 +195,77 @@ Use it for:
 * full-text search
 * coding-agent repo context
 
-Horizon should not build its own parser, code graph, route graph, or symbol index first. It should normalize outputs from these systems into Horizon `EvidenceItem`s.
+Ad hoc truth tools:
+
+* `ripgrep`
+* `git grep`
+* `fd`
+
+Use them for:
+
+* fast lexical confirmation
+* fallback search
+* generated-file checks
+* stale-index verification
+* exact string/path/symbol lookup
+
+Repo watching:
+
+* Watchman, optional
+* native filesystem watcher fallback
+
+Use repo watching for:
+
+* index invalidation
+* Context Pack cache invalidation
+* stale fact invalidation
+* dependency fingerprint refresh
+* prewarming likely evidence
+
+Horizon should not build its own parser, code graph, route graph, symbol index, or filesystem watcher first.
+
+Horizon should normalize outputs from these systems into Horizon `EvidenceItem`s.
 
 ---
 
-### 2. Harness / Skills / Hooks Layer
+### 4. Harness / Skills / Hooks Reference
 
-Primary reference or dependency:
+Primary reference:
 
-* `ECC`
+* ECC
 
-Use it for:
+Use ECC for ideas around:
 
-* cross-harness architecture
-* skill packaging
 * hook conventions
-* rules distribution
 * command packaging
+* rules distribution
 * project/global learning distinction
 * continuous-learning mechanics
-* Codex / Claude Code / OpenCode / Cursor compatibility ideas
+* host compatibility lessons
 
-Horizon should not build a full cross-harness skill ecosystem from scratch.
+Do not adopt ECC as Horizon’s product shape.
 
-Horizon should own only the Host Adapter ABI and Context Pack rendering contract.
+Horizon should not become a cross-harness skill ecosystem.
+
+For MVP, Horizon should only implement:
+
+* OpenCode Host Adapter ABI
+* Context Pack rendering contract
+* OpenCode observation bridge
+* OpenCode validation broker
 
 ---
 
-### 3. Generic Agent Memory
+### 5. Generic Agent Memory
 
 Optional backend:
 
-* `Hindsight`
+* Hindsight
 
 Use it for:
 
 * generic retain/recall/reflect memory
-* long-term user/project/agent memory
+* long-term user/project/agent memory experiments
 * temporal memory queries
 * non-code conversational memory
 * experience memory experiments
@@ -181,7 +276,7 @@ Repo truth must pass through Horizon’s stricter fact lifecycle, provenance mod
 
 ---
 
-### 4. Search and Storage
+### 6. Search and Storage
 
 Canonical local state:
 
@@ -191,7 +286,7 @@ Use:
 
 * SQLite tables for canonical Horizon state
 * SQLite FTS5 for lexical search
-* sqlite-vec or equivalent for local vector search, if needed
+* `sqlite-vec` or equivalent for local vector search, if needed
 * append-only event tables for replay
 * rebuildable projections for graph/vector/search views
 
@@ -214,10 +309,11 @@ Possible later modules:
 * Sourcebot
 * Zoekt
 * livegrep
+* SCIP-compatible code-intelligence export/import
 
 ---
 
-### 5. Validation Engines
+### 7. Validation Engines
 
 Use existing project tools.
 
@@ -239,9 +335,9 @@ Execution substrates:
 
 * plain local shell first
 * devcontainers
-* Dagger
-* Nix
 * Docker
+* Nix
+* Dagger
 * Firecracker only for high-risk isolation later
 
 Horizon owns:
@@ -255,9 +351,21 @@ Horizon owns:
 * validation usefulness attribution
 * wasted-validation detection
 
+Future validation-routing substrate:
+
+* RIG-style repository intelligence graph
+* build graph
+* test graph
+* dependency graph
+* source/test affinity graph
+
+Use these to improve impacted-test selection and validation routing.
+
+Do not build a full build system.
+
 ---
 
-### 6. Observability and Replay
+### 8. Observability, Replay, and Evaluation
 
 Start simple:
 
@@ -265,18 +373,34 @@ Start simple:
 * JSONL export
 * SQLite trace tables
 * CLI inspection
+* replayable audit bundles
 
 Optional external systems:
 
+* OpenTelemetry
 * Langfuse
 * LangSmith
-* OpenTelemetry
 * Inspect AI
-* SWE-bench-style harnesses
 
-Horizon should not start with a large observability dashboard.
+Evaluation references:
 
-Horizon’s differentiator is not tracing. It is attribution and policy improvement.
+* SWE-agent
+* mini-SWE-agent
+* OpenHands
+* GitTaskBench
+* SWE-bench-style fixtures
+
+Use evaluation tools for:
+
+* replay design
+* ablation testing
+* regression fixtures
+* host-independent stress tests
+* measurement methodology
+
+Do not treat benchmarks as product truth.
+
+Horizon’s differentiator is not tracing or benchmarking. It is attribution and policy improvement.
 
 ---
 
@@ -285,7 +409,7 @@ Horizon’s differentiator is not tracing. It is attribution and policy improvem
 Horizon is composed of planes. Each plane must consume and emit typed objects. No plane should depend on another plane’s internal storage.
 
 ```text
-1. Host Integration Plane
+1. OpenCode Host Integration Plane
 2. Local Runtime + Event Ledger Plane
 3. Trust Boundary + Exposure Plane
 4. Config + Policy Plane
@@ -305,14 +429,14 @@ Horizon is composed of planes. Each plane must consume and emit typed objects. N
 
 ---
 
-## 1. Host Integration Plane
+## 1. OpenCode Host Integration Plane
 
-Owns the boundary between Horizon and coding agents.
+Owns the boundary between Horizon and OpenCode.
 
 Horizon integrates through:
 
 * MCP server
-* host adapters
+* OpenCode adapter
 * context rendering
 * session hooks
 * file-touch observation
@@ -332,7 +456,7 @@ Level 5: context-usage attribution
 Level 6: permission and validation brokering
 ```
 
-Horizon must degrade based on measured host capability, not optimistic assumptions.
+Horizon must degrade based on measured OpenCode capability, not optimistic assumptions.
 
 ---
 
@@ -367,7 +491,7 @@ Guarantees:
 
 ## 3. Trust Boundary + Exposure Plane
 
-Owns what Horizon may observe, store, expose, redact, send to hosts, or include in replay.
+Owns what Horizon may observe, store, expose, redact, send to OpenCode, or include in replay.
 
 Every Context Pack must include an `ExposureManifest`.
 
@@ -397,7 +521,7 @@ Primary file:
 Policy areas:
 
 * repo roots
-* host profiles
+* OpenCode host profile
 * context budget profiles
 * validation rules
 * generated-file rules
@@ -425,6 +549,12 @@ Primary backend:
 Alternate backend:
 
 * `codegraph`
+
+Fallback tools:
+
+* `ripgrep`
+* `git grep`
+* `fd`
 
 Adapter output:
 
@@ -533,6 +663,7 @@ Turns task intent into ranked, scoped, conflict-aware evidence.
 Inputs:
 
 * repo intelligence backend results
+* fallback lexical search results
 * previous Context Packs
 * approved facts
 * negative facts
@@ -570,7 +701,7 @@ A Context Pack may include:
 * ABI version
 * pack manifest
 * task identity
-* host identity
+* OpenCode host identity
 * repo identity
 * branch/worktree fingerprint
 * dependency fingerprint
@@ -659,12 +790,12 @@ Horizon should use existing validation engines.
 
 ## 11. Session Observation Plane
 
-Observes the host agent without becoming the host agent.
+Observes OpenCode without becoming OpenCode.
 
 Raw events:
 
-* transcript events
-* tool calls
+* transcript events, if available
+* tool calls, if available
 * file reads
 * file writes
 * terminal commands
@@ -765,6 +896,9 @@ Use:
 * Horizon-on/off ablations
 * golden task fixtures
 * regression suites
+* SWE-agent / mini-SWE-agent-style harnesses
+* OpenHands-style sandbox/evaluation patterns
+* GitTaskBench-style task/cost measurement
 * SWE-bench-style adapters only as optional fixtures
 
 Benchmarks are replay fixtures, not product truth.
@@ -853,7 +987,7 @@ ABIs are enforceable compatibility surfaces.
 Core ABIs:
 
 * Context Pack ABI
-* Host Adapter ABI
+* OpenCode Host Adapter ABI
 * Evidence ABI
 * Memory Fact ABI
 * Negative Fact ABI
@@ -944,6 +1078,7 @@ custom observability dashboard
 custom coding agent
 custom patch generator
 custom IDE
+multi-host adapter system
 ```
 
 Use existing systems through adapters.
@@ -955,7 +1090,7 @@ Use existing systems through adapters.
 Build these directly:
 
 ```text
-Host Adapter ABI
+OpenCode Host Adapter ABI
 EvidenceItem schema
 Context Pack ABI
 ExposureManifest
@@ -988,10 +1123,15 @@ TypeScript
 Node.js
 SQLite
 SQLite FTS5
+sqlite-vec, optional
 MCP SDK
+OpenCode adapter
 codebase-memory-mcp adapter
 optional codegraph adapter
+ripgrep fallback search
+Watchman or native fs watcher
 local shell validation adapter
+Semgrep adapter
 horizon.yaml
 JSON Schema or Zod schemas
 CLI-first user surface
@@ -1008,6 +1148,7 @@ custom sandbox
 custom vector database
 custom model routing layer
 custom agent framework
+multi-host adapter layer
 ```
 
 ---
@@ -1022,7 +1163,7 @@ Build:
 * SQLite schema
 * event ledger
 * `horizon.yaml`
-* Host Adapter ABI v0
+* OpenCode Host Adapter ABI v0
 * Context Pack ABI v0
 * EvidenceItem schema
 * CLI commands
@@ -1031,11 +1172,12 @@ Integrate:
 
 * MCP SDK
 * `codebase-memory-mcp` or `codegraph`
+* `ripgrep` fallback search
 
 Goal:
 
 ```text
-Given a task, Horizon can query repo intelligence and emit a small evidence-backed Context Pack.
+Given a task, Horizon can query repo intelligence and emit a small evidence-backed Context Pack for OpenCode.
 ```
 
 ---
@@ -1050,11 +1192,14 @@ Build:
 * negative facts
 * stale/conflict warnings
 * inclusion/exclusion rationale
+* generated-file warnings
+* exact lexical confirmation using ripgrep/git grep
+* repo watcher invalidation
 
 Goal:
 
 ```text
-Horizon stops agents from rediscovering false, stale, or irrelevant repo information.
+Horizon stops OpenCode from rediscovering false, stale, or irrelevant repo information.
 ```
 
 ---
@@ -1068,6 +1213,8 @@ Build:
 * impacted-check selection
 * validation result storage
 * flaky/wasted validation tracking
+* Semgrep adapter
+* dependency/API drift checks
 
 Goal:
 
@@ -1081,14 +1228,15 @@ Horizon recommends or runs the cheapest useful validation for a task.
 
 Build:
 
-* host event ingestion
+* OpenCode event ingestion
 * file-touch observation
 * context-use signals
 * missed-context signals
+* validation-usefulness signals
 * attribution labels
 * pack usefulness scoring
 
-Borrow ideas from ECC hooks.
+Borrow ideas from ECC hooks, but keep the implementation OpenCode-specific.
 
 Goal:
 
@@ -1107,6 +1255,7 @@ Build:
 * scoped promotion
 * rollback
 * leverage reports
+* audit bundle export
 
 Goal:
 
@@ -1142,17 +1291,23 @@ Backends can be replaced. Horizon ABIs should not break.
 Recommended defaults:
 
 ```text
-repo intelligence: codebase-memory-mcp
-alternate repo intelligence: codegraph
-harness pattern/reference: ECC
-generic memory: Hindsight, optional
-canonical storage: SQLite
-lexical search: SQLite FTS5
-vector search: optional sqlite-vec
-validation execution: local shell first
-schema validation: Zod or JSON Schema
+host target: OpenCode only
 host protocol: MCP
 language/runtime: TypeScript + Node.js
+canonical storage: SQLite
+lexical search: SQLite FTS5
+ad hoc lexical truth: ripgrep + git grep
+vector search: optional sqlite-vec
+repo intelligence: codebase-memory-mcp
+alternate repo intelligence: codegraph
+repo watching: Watchman or native fs watcher
+harness pattern/reference: ECC
+generic memory: Hindsight, optional
+validation execution: local shell first
+validation routing: project commands + Semgrep + CodeQL where useful
+schema validation: Zod or JSON Schema
+evaluation references: SWE-agent, mini-SWE-agent, OpenHands, GitTaskBench
+observability export: JSONL first, OpenTelemetry later
 ```
 
 ---
@@ -1162,8 +1317,9 @@ language/runtime: TypeScript + Node.js
 Horizon should become:
 
 ```text
-existing repo intelligence
-+ existing harness hooks
+OpenCode adapter
++ existing repo intelligence
++ existing watcher/search tools
 + existing validation tools
 + existing optional memory backend
 + Horizon evidence/control layer
@@ -1177,15 +1333,18 @@ a new IDE
 a new CI system
 a new code search engine
 a new generic memory platform
+a multi-host harness ecosystem
 ```
 
 The winning architecture is a thin, strict, local-first control layer:
 
 ```text
-repo backend
+OpenCode
+-> Host Adapter ABI
+-> task intent
+-> repo backend / lexical fallback
 -> EvidenceItem normalization
 -> fact / negative-fact lifecycle
--> task intent
 -> evidence selection
 -> Context Pack ABI
 -> validation routing
@@ -1197,4 +1356,4 @@ repo backend
 
 Horizon’s moat is not infrastructure.
 
-Horizon’s moat is knowing what context matters, whether it helped, and how to make the next agent run better.
+Horizon’s moat is knowing what context matters, whether it helped, and how to make the next OpenCode run better.
